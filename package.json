@@ -1,0 +1,68 @@
+{
+  "name": "quad-terminal",
+  "displayName": "Quad Terminal",
+  "description": "4 terminals in a 2x2 grid layout for the secondary sidebar",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:quadTerminal.grid",
+    "onCommand:quadTerminal.open"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "quadTerminal",
+          "title": "Quad Terminal",
+          "icon": "$(terminal)"
+        }
+      ]
+    },
+    "views": {
+      "quadTerminal": [
+        {
+          "type": "webview",
+          "id": "quadTerminal.grid",
+          "name": "Terminal Grid",
+          "visibility": "visible"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "quadTerminal.open",
+        "title": "Open Quad Terminal",
+        "category": "Quad Terminal"
+      },
+      {
+        "command": "quadTerminal.refresh",
+        "title": "Refresh Terminals",
+        "category": "Quad Terminal"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^4.0.2",
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "@xterm/addon-attach": "^0.10.0",
+    "@xterm/addon-fit": "^0.9.0",
+    "@xterm/xterm": "^5.4.0",
+    "node-pty": "^1.1.0"
+  }
+}
