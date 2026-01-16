@@ -362,6 +362,128 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       background: var(--vscode-editor-background, #1e1e1e);
       font-family: var(--vscode-font-family, system-ui, -apple-system, sans-serif);
     }
+
+    /* App Container */
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+    }
+
+    /* Control Panel */
+    .control-panel {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px;
+      background: var(--vscode-editorGroupHeader-tabsBackground, #252526);
+      border-bottom: 1px solid var(--vscode-editorGroup-border, var(--vscode-panel-border, #333));
+      flex-shrink: 0;
+    }
+    .control-panel-section {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .control-panel-divider {
+      width: 1px;
+      height: 20px;
+      background: var(--vscode-editorGroup-border, #444);
+      opacity: 0.5;
+    }
+    .control-label {
+      font-size: 11px;
+      color: var(--vscode-descriptionForeground, #888);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    .project-select {
+      background: var(--vscode-input-background, #3c3c3c);
+      color: var(--vscode-input-foreground, #ccc);
+      border: 1px solid var(--vscode-input-border, transparent);
+      border-radius: 4px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      min-width: 180px;
+      transition: all 0.15s ease;
+    }
+    .project-select:hover {
+      border-color: var(--vscode-focusBorder, #007acc);
+    }
+    .project-select:focus {
+      outline: none;
+      border-color: var(--vscode-focusBorder, #007acc);
+      box-shadow: 0 0 0 1px var(--vscode-focusBorder, #007acc);
+    }
+    .project-select option {
+      background: var(--vscode-dropdown-background, #252526);
+      color: var(--vscode-dropdown-foreground, #ccc);
+      padding: 4px;
+    }
+    .resume-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--vscode-foreground, #ccc);
+      cursor: pointer;
+      user-select: none;
+      padding: 5px 8px;
+      border-radius: 4px;
+      transition: all 0.12s ease;
+    }
+    .resume-label:hover {
+      background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.4));
+    }
+    .resume-checkbox {
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+      accent-color: var(--vscode-focusBorder, #007acc);
+      margin: 0;
+    }
+    .add-terminal-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 4px;
+      border: none;
+      background: var(--vscode-button-background, #0e639c);
+      color: var(--vscode-button-foreground, #fff);
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .add-terminal-btn:hover {
+      background: var(--vscode-button-hoverBackground, #1177bb);
+    }
+    .add-terminal-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .add-terminal-btn svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+    .terminal-count {
+      font-size: 11px;
+      color: var(--vscode-descriptionForeground, #888);
+      margin-left: auto;
+    }
+
+    /* Grid Container */
+    .grid-container {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+    }
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -370,6 +492,18 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       width: 100%;
       gap: 1px;
       background: var(--vscode-editorGroup-border, var(--vscode-panel-border, #333));
+      position: relative;
+    }
+    .grid.terminals-1 {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr;
+    }
+    .grid.terminals-2 {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr 1fr;
+    }
+    .terminal-container.hidden-slot {
+      display: none;
     }
     .terminal-container {
       position: relative;
@@ -380,12 +514,14 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     .terminal-container:focus-within {
       z-index: 1;
     }
+
+    /* Terminal Header */
     .terminal-header {
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
-      height: 36px;
+      height: 32px;
       background: var(--vscode-editorGroupHeader-tabsBackground, #252526);
       color: var(--vscode-tab-inactiveForeground, #969696);
       font-size: 12px;
@@ -403,79 +539,99 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       border-bottom-color: var(--vscode-focusBorder, #007acc);
     }
     .terminal-icon {
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
       opacity: 0.7;
-      transition: opacity 0.15s ease;
+      flex-shrink: 0;
     }
     .terminal-container:focus-within .terminal-icon {
       opacity: 1;
     }
     .terminal-icon svg {
-      width: 16px;
-      height: 16px;
+      width: 14px;
+      height: 14px;
       fill: currentColor;
     }
-    .project-select {
-      flex: 1;
-      background: var(--vscode-input-background, #3c3c3c);
-      color: var(--vscode-input-foreground, #ccc);
-      border: 1px solid transparent;
-      border-radius: 4px;
-      padding: 4px 8px;
-      font-size: 12px;
-      font-family: inherit;
-      cursor: pointer;
-      min-width: 0;
-      transition: all 0.15s ease;
-    }
-    .project-select.hidden {
-      display: none;
-    }
-    .project-select:hover {
-      border-color: var(--vscode-input-border, #555);
-    }
-    .project-select:focus {
-      outline: none;
-      border-color: var(--vscode-focusBorder, #007acc);
-      box-shadow: 0 0 0 1px var(--vscode-focusBorder, #007acc);
-    }
-    .project-select option {
-      background: var(--vscode-dropdown-background, #252526);
-      color: var(--vscode-dropdown-foreground, #ccc);
-      padding: 4px;
-    }
-    .project-name {
+    .terminal-title {
       flex: 1;
       font-size: 12px;
       font-weight: 500;
-      color: var(--vscode-foreground, #ccc);
+      color: inherit;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       min-width: 0;
-      display: none;
     }
-    .project-name.visible {
-      display: block;
-    }
-    .header-divider {
-      width: 1px;
-      height: 16px;
-      background: var(--vscode-editorGroup-border, #444);
-      opacity: 0.5;
+    .terminal-title.empty {
+      font-style: italic;
+      opacity: 0.6;
     }
     .header-actions {
       display: flex;
       align-items: center;
       gap: 2px;
     }
+    .action-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border: none;
+      background: transparent;
+      color: var(--vscode-descriptionForeground, #888);
+      cursor: pointer;
+      border-radius: 4px;
+      padding: 0;
+      transition: all 0.12s ease;
+      opacity: 0;
+    }
+    .terminal-header:hover .action-btn,
+    .terminal-container:focus-within .action-btn {
+      opacity: 1;
+    }
+    .action-btn:hover {
+      background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.4));
+      color: var(--vscode-foreground, #ccc);
+    }
+    .action-btn svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+    .action-btn.kill-btn:hover {
+      color: var(--vscode-errorForeground, #f48771);
+      background: rgba(244, 135, 113, 0.1);
+    }
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--vscode-descriptionForeground, #555);
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+    .status-indicator.active {
+      background: var(--vscode-terminal-ansiGreen, #89d185);
+      box-shadow: 0 0 6px var(--vscode-terminal-ansiGreen, #89d185);
+    }
+    .status-indicator.busy {
+      background: var(--vscode-terminal-ansiYellow, #e5e510);
+      box-shadow: 0 0 6px var(--vscode-terminal-ansiYellow, #e5e510);
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.9); }
+    }
+
+    /* Terminal Content */
     .terminal-wrapper {
       position: absolute;
-      top: 36px;
+      top: 32px;
       left: 0;
       right: 0;
       bottom: 0;
@@ -512,12 +668,12 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     .terminal-placeholder-text {
       font-size: 12px;
       line-height: 1.5;
-      max-width: 160px;
+      max-width: 180px;
     }
     .xterm {
       height: 100%;
       width: 100%;
-      padding: 8px 12px;
+      padding: 4px 8px 0 8px;
     }
     .xterm-viewport {
       overflow-y: auto !important;
@@ -538,219 +694,141 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     .xterm .xterm-screen {
       cursor: text;
     }
-    .status-indicator {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--vscode-descriptionForeground, #555);
-      flex-shrink: 0;
-      transition: all 0.2s ease;
-    }
-    .status-indicator.active {
-      background: var(--vscode-terminal-ansiGreen, #89d185);
-      box-shadow: 0 0 6px var(--vscode-terminal-ansiGreen, #89d185);
-    }
-    .status-indicator.busy {
-      background: var(--vscode-terminal-ansiYellow, #e5e510);
-      box-shadow: 0 0 6px var(--vscode-terminal-ansiYellow, #e5e510);
-      animation: pulse 1.2s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.6; transform: scale(0.9); }
-    }
-    .action-btn {
-      display: none;
-      align-items: center;
-      justify-content: center;
-      width: 24px;
-      height: 24px;
-      border: none;
-      background: transparent;
-      color: var(--vscode-descriptionForeground, #888);
-      cursor: pointer;
-      border-radius: 4px;
-      padding: 0;
-      transition: all 0.12s ease;
-    }
-    .action-btn:hover {
-      background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.4));
-      color: var(--vscode-foreground, #ccc);
-    }
-    .action-btn.visible {
-      display: flex;
-    }
-    .action-btn svg {
-      width: 14px;
-      height: 14px;
-      fill: currentColor;
-    }
-    .action-btn.kill-btn:hover {
-      color: var(--vscode-errorForeground, #f48771);
-      background: rgba(244, 135, 113, 0.1);
-    }
+
+    /* Fullscreen Mode */
     .grid.has-fullscreen .terminal-container {
       display: none;
     }
     .grid.has-fullscreen .terminal-container.fullscreen {
       display: block;
-      grid-column: 1 / -1;
-      grid-row: 1 / -1;
-    }
-    .resume-label {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 11px;
-      color: var(--vscode-descriptionForeground, #888);
-      cursor: pointer;
-      user-select: none;
-      padding: 4px 6px;
-      border-radius: 4px;
-      transition: all 0.12s ease;
-    }
-    .resume-label.hidden {
-      display: none;
-    }
-    .resume-label:hover {
-      background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.4));
-      color: var(--vscode-foreground, #ccc);
-    }
-    .resume-checkbox {
-      width: 13px;
-      height: 13px;
-      cursor: pointer;
-      accent-color: var(--vscode-focusBorder, #007acc);
-      margin: 0;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 10;
     }
   </style>
 </head>
 <body>
-  <div class="grid">
-    <div class="terminal-container" id="term-container-0">
-      <div class="terminal-header">
-        <span class="terminal-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
-        <select class="project-select" id="project-select-0">
+  <div class="app-container">
+    <!-- Control Panel -->
+    <div class="control-panel">
+      <div class="control-panel-section">
+        <span class="control-label">Project</span>
+        <select class="project-select" id="global-project-select">
           <option value="">Select project...</option>
         </select>
-        <span class="project-name" id="project-name-0"></span>
-        <label class="resume-label" id="resume-label-0" title="Resume previous Claude session">
-          <input type="checkbox" class="resume-checkbox" id="resume-0">
-          <span>resume</span>
-        </label>
-        <span class="header-divider"></span>
-        <div class="header-actions">
-          <button class="action-btn fullscreen-btn" id="fullscreen-0" title="Toggle fullscreen">
-            <svg class="expand-icon" viewBox="0 0 16 16"><path d="M3 3v4h1V4h3V3H3zm10 0h-4v1h3v3h1V3zM4 12v-3H3v4h4v-1H4zm8-3v3h-3v1h4V9h-1z"/></svg>
-            <svg class="collapse-icon" style="display:none" viewBox="0 0 16 16"><path d="M2 2h5v5H2V2zm1 1v3h3V3H3zm7-1h5v5h-5V2zm1 1v3h3V3h-3zM2 9h5v5H2V9zm1 1v3h3v-3H3zm7-1h5v5h-5V9zm1 1v3h3v-3h-3z"/></svg>
-          </button>
-          <button class="action-btn kill-btn" id="kill-0" title="Kill terminal">
-            <svg viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
-          </button>
-        </div>
-        <span class="status-indicator" id="status-0"></span>
       </div>
-      <div class="terminal-wrapper">
-        <div id="terminal-0">
-          <div class="terminal-placeholder">
-            <span class="terminal-placeholder-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
-            <span class="terminal-placeholder-text">Select a project to start Claude</span>
+      <label class="resume-label" id="global-resume-label" title="Resume previous Claude session">
+        <input type="checkbox" class="resume-checkbox" id="global-resume">
+        <span>Resume session</span>
+      </label>
+      <div class="control-panel-divider"></div>
+      <button class="add-terminal-btn" id="add-terminal-btn" title="Add terminal with selected project" disabled>
+        <svg viewBox="0 0 16 16"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg>
+        <span>Add Terminal</span>
+      </button>
+      <span class="terminal-count" id="terminal-count">1 / 4</span>
+    </div>
+
+    <!-- Grid Container -->
+    <div class="grid-container">
+      <div class="grid terminals-1">
+        <div class="terminal-container" id="term-container-0">
+          <div class="terminal-header">
+            <span class="terminal-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
+            <span class="terminal-title empty" id="terminal-title-0">Terminal 1</span>
+            <div class="header-actions">
+              <button class="action-btn fullscreen-btn" id="fullscreen-0" title="Toggle fullscreen">
+                <svg class="expand-icon" viewBox="0 0 16 16"><path d="M3 3v4h1V4h3V3H3zm10 0h-4v1h3v3h1V3zM4 12v-3H3v4h4v-1H4zm8-3v3h-3v1h4V9h-1z"/></svg>
+                <svg class="collapse-icon" style="display:none" viewBox="0 0 16 16"><path d="M2 2h5v5H2V2zm1 1v3h3V3H3zm7-1h5v5h-5V2zm1 1v3h3V3h-3zM2 9h5v5H2V9zm1 1v3h3v-3H3zm7-1h5v5h-5V9zm1 1v3h3v-3h-3z"/></svg>
+              </button>
+              <button class="action-btn kill-btn" id="kill-0" title="Kill terminal">
+                <svg viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
+              </button>
+            </div>
+            <span class="status-indicator" id="status-0"></span>
+          </div>
+          <div class="terminal-wrapper">
+            <div id="terminal-0">
+              <div class="terminal-placeholder">
+                <span class="terminal-placeholder-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
+                <span class="terminal-placeholder-text">Select a project and click "Add Terminal"</span>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-    <div class="terminal-container" id="term-container-1">
-      <div class="terminal-header">
-        <span class="terminal-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
-        <select class="project-select" id="project-select-1">
-          <option value="">Select project...</option>
-        </select>
-        <span class="project-name" id="project-name-1"></span>
-        <label class="resume-label" id="resume-label-1" title="Resume previous Claude session">
-          <input type="checkbox" class="resume-checkbox" id="resume-1">
-          <span>resume</span>
-        </label>
-        <span class="header-divider"></span>
-        <div class="header-actions">
-          <button class="action-btn fullscreen-btn" id="fullscreen-1" title="Toggle fullscreen">
-            <svg class="expand-icon" viewBox="0 0 16 16"><path d="M3 3v4h1V4h3V3H3zm10 0h-4v1h3v3h1V3zM4 12v-3H3v4h4v-1H4zm8-3v3h-3v1h4V9h-1z"/></svg>
-            <svg class="collapse-icon" style="display:none" viewBox="0 0 16 16"><path d="M2 2h5v5H2V2zm1 1v3h3V3H3zm7-1h5v5h-5V2zm1 1v3h3V3h-3zM2 9h5v5H2V9zm1 1v3h3v-3H3zm7-1h5v5h-5V9zm1 1v3h3v-3h-3z"/></svg>
-          </button>
-          <button class="action-btn kill-btn" id="kill-1" title="Kill terminal">
-            <svg viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
-          </button>
-        </div>
-        <span class="status-indicator" id="status-1"></span>
-      </div>
-      <div class="terminal-wrapper">
-        <div id="terminal-1">
-          <div class="terminal-placeholder">
-            <span class="terminal-placeholder-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
-            <span class="terminal-placeholder-text">Select a project to start Claude</span>
+        <div class="terminal-container hidden-slot" id="term-container-1">
+          <div class="terminal-header">
+            <span class="terminal-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
+            <span class="terminal-title empty" id="terminal-title-1">Terminal 2</span>
+            <div class="header-actions">
+              <button class="action-btn fullscreen-btn" id="fullscreen-1" title="Toggle fullscreen">
+                <svg class="expand-icon" viewBox="0 0 16 16"><path d="M3 3v4h1V4h3V3H3zm10 0h-4v1h3v3h1V3zM4 12v-3H3v4h4v-1H4zm8-3v3h-3v1h4V9h-1z"/></svg>
+                <svg class="collapse-icon" style="display:none" viewBox="0 0 16 16"><path d="M2 2h5v5H2V2zm1 1v3h3V3H3zm7-1h5v5h-5V2zm1 1v3h3V3h-3zM2 9h5v5H2V9zm1 1v3h3v-3H3zm7-1h5v5h-5V9zm1 1v3h3v-3h-3z"/></svg>
+              </button>
+              <button class="action-btn kill-btn" id="kill-1" title="Kill terminal">
+                <svg viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
+              </button>
+            </div>
+            <span class="status-indicator" id="status-1"></span>
+          </div>
+          <div class="terminal-wrapper">
+            <div id="terminal-1">
+              <div class="terminal-placeholder">
+                <span class="terminal-placeholder-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
+                <span class="terminal-placeholder-text">Select a project and click "Add Terminal"</span>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-    <div class="terminal-container" id="term-container-2">
-      <div class="terminal-header">
-        <span class="terminal-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
-        <select class="project-select" id="project-select-2">
-          <option value="">Select project...</option>
-        </select>
-        <span class="project-name" id="project-name-2"></span>
-        <label class="resume-label" id="resume-label-2" title="Resume previous Claude session">
-          <input type="checkbox" class="resume-checkbox" id="resume-2">
-          <span>resume</span>
-        </label>
-        <span class="header-divider"></span>
-        <div class="header-actions">
-          <button class="action-btn fullscreen-btn" id="fullscreen-2" title="Toggle fullscreen">
-            <svg class="expand-icon" viewBox="0 0 16 16"><path d="M3 3v4h1V4h3V3H3zm10 0h-4v1h3v3h1V3zM4 12v-3H3v4h4v-1H4zm8-3v3h-3v1h4V9h-1z"/></svg>
-            <svg class="collapse-icon" style="display:none" viewBox="0 0 16 16"><path d="M2 2h5v5H2V2zm1 1v3h3V3H3zm7-1h5v5h-5V2zm1 1v3h3V3h-3zM2 9h5v5H2V9zm1 1v3h3v-3H3zm7-1h5v5h-5V9zm1 1v3h3v-3h-3z"/></svg>
-          </button>
-          <button class="action-btn kill-btn" id="kill-2" title="Kill terminal">
-            <svg viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
-          </button>
-        </div>
-        <span class="status-indicator" id="status-2"></span>
-      </div>
-      <div class="terminal-wrapper">
-        <div id="terminal-2">
-          <div class="terminal-placeholder">
-            <span class="terminal-placeholder-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
-            <span class="terminal-placeholder-text">Select a project to start Claude</span>
+        <div class="terminal-container hidden-slot" id="term-container-2">
+          <div class="terminal-header">
+            <span class="terminal-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
+            <span class="terminal-title empty" id="terminal-title-2">Terminal 3</span>
+            <div class="header-actions">
+              <button class="action-btn fullscreen-btn" id="fullscreen-2" title="Toggle fullscreen">
+                <svg class="expand-icon" viewBox="0 0 16 16"><path d="M3 3v4h1V4h3V3H3zm10 0h-4v1h3v3h1V3zM4 12v-3H3v4h4v-1H4zm8-3v3h-3v1h4V9h-1z"/></svg>
+                <svg class="collapse-icon" style="display:none" viewBox="0 0 16 16"><path d="M2 2h5v5H2V2zm1 1v3h3V3H3zm7-1h5v5h-5V2zm1 1v3h3V3h-3zM2 9h5v5H2V9zm1 1v3h3v-3H3zm7-1h5v5h-5V9zm1 1v3h3v-3h-3z"/></svg>
+              </button>
+              <button class="action-btn kill-btn" id="kill-2" title="Kill terminal">
+                <svg viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
+              </button>
+            </div>
+            <span class="status-indicator" id="status-2"></span>
+          </div>
+          <div class="terminal-wrapper">
+            <div id="terminal-2">
+              <div class="terminal-placeholder">
+                <span class="terminal-placeholder-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
+                <span class="terminal-placeholder-text">Select a project and click "Add Terminal"</span>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-    <div class="terminal-container" id="term-container-3">
-      <div class="terminal-header">
-        <span class="terminal-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
-        <select class="project-select" id="project-select-3">
-          <option value="">Select project...</option>
-        </select>
-        <span class="project-name" id="project-name-3"></span>
-        <label class="resume-label" id="resume-label-3" title="Resume previous Claude session">
-          <input type="checkbox" class="resume-checkbox" id="resume-3">
-          <span>resume</span>
-        </label>
-        <span class="header-divider"></span>
-        <div class="header-actions">
-          <button class="action-btn fullscreen-btn" id="fullscreen-3" title="Toggle fullscreen">
-            <svg class="expand-icon" viewBox="0 0 16 16"><path d="M3 3v4h1V4h3V3H3zm10 0h-4v1h3v3h1V3zM4 12v-3H3v4h4v-1H4zm8-3v3h-3v1h4V9h-1z"/></svg>
-            <svg class="collapse-icon" style="display:none" viewBox="0 0 16 16"><path d="M2 2h5v5H2V2zm1 1v3h3V3H3zm7-1h5v5h-5V2zm1 1v3h3V3h-3zM2 9h5v5H2V9zm1 1v3h3v-3H3zm7-1h5v5h-5V9zm1 1v3h3v-3h-3z"/></svg>
-          </button>
-          <button class="action-btn kill-btn" id="kill-3" title="Kill terminal">
-            <svg viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
-          </button>
-        </div>
-        <span class="status-indicator" id="status-3"></span>
-      </div>
-      <div class="terminal-wrapper">
-        <div id="terminal-3">
-          <div class="terminal-placeholder">
-            <span class="terminal-placeholder-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
-            <span class="terminal-placeholder-text">Select a project to start Claude</span>
+        <div class="terminal-container hidden-slot" id="term-container-3">
+          <div class="terminal-header">
+            <span class="terminal-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
+            <span class="terminal-title empty" id="terminal-title-3">Terminal 4</span>
+            <div class="header-actions">
+              <button class="action-btn fullscreen-btn" id="fullscreen-3" title="Toggle fullscreen">
+                <svg class="expand-icon" viewBox="0 0 16 16"><path d="M3 3v4h1V4h3V3H3zm10 0h-4v1h3v3h1V3zM4 12v-3H3v4h4v-1H4zm8-3v3h-3v1h4V9h-1z"/></svg>
+                <svg class="collapse-icon" style="display:none" viewBox="0 0 16 16"><path d="M2 2h5v5H2V2zm1 1v3h3V3H3zm7-1h5v5h-5V2zm1 1v3h3V3h-3zM2 9h5v5H2V9zm1 1v3h3v-3H3zm7-1h5v5h-5V9zm1 1v3h3v-3h-3z"/></svg>
+              </button>
+              <button class="action-btn kill-btn" id="kill-3" title="Kill terminal">
+                <svg viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
+              </button>
+            </div>
+            <span class="status-indicator" id="status-3"></span>
+          </div>
+          <div class="terminal-wrapper">
+            <div id="terminal-3">
+              <div class="terminal-placeholder">
+                <span class="terminal-placeholder-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
+                <span class="terminal-placeholder-text">Select a project and click "Add Terminal"</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -800,33 +878,11 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
                                getVSCodeColor('--vscode-editor-font-family', 'Menlo, Monaco, "Courier New", monospace');
     const terminalFontSize = parseInt(getVSCodeColor('--vscode-terminal-font-size', '12')) || 12;
 
-    // Setup project selectors and kill buttons
-    for (let i = 0; i < 4; i++) {
-      const select = document.getElementById('project-select-' + i);
-      select.addEventListener('change', (e) => {
-        const projectPath = e.target.value;
-        if (projectPath) {
-          const resumeCheckbox = document.getElementById('resume-' + i);
-          const resume = resumeCheckbox.checked;
-          initializeTerminal(i);
-          vscode.postMessage({
-            command: 'selectProject',
-            terminalId: i,
-            projectPath: projectPath,
-            resume: resume
-          });
-          document.getElementById('status-' + i).classList.add('active');
-          document.getElementById('kill-' + i).classList.add('visible');
-          document.getElementById('fullscreen-' + i).classList.add('visible');
-          // Hide dropdown and resume, show project name
-          document.getElementById('project-select-' + i).classList.add('hidden');
-          document.getElementById('resume-label-' + i).classList.add('hidden');
-          const projectNameEl = document.getElementById('project-name-' + i);
-          projectNameEl.textContent = e.target.options[e.target.selectedIndex].text;
-          projectNameEl.classList.add('visible');
-        }
-      });
+    // Track which terminals have active sessions
+    const terminalProjects = ['', '', '', ''];
 
+    // Setup kill and fullscreen buttons for each terminal
+    for (let i = 0; i < 4; i++) {
       const killBtn = document.getElementById('kill-' + i);
       killBtn.addEventListener('click', () => {
         vscode.postMessage({
@@ -839,9 +895,171 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       fullscreenBtn.addEventListener('click', () => {
         toggleFullscreen(i);
       });
+
+      // Drag and drop support for files
+      const termContainer = document.getElementById('term-container-' + i);
+      termContainer.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'copy';
+      });
+
+      termContainer.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        let paths = [];
+
+        // Try to get URI list (for files dragged from VS Code explorer or Finder)
+        const uriList = e.dataTransfer.getData('text/uri-list');
+        if (uriList) {
+          paths = uriList.split(/\r?\n/)
+            .map(uri => uri.trim())
+            .filter(uri => uri && !uri.startsWith('#'))
+            .map(uri => {
+              if (uri.startsWith('file://')) {
+                // Handle file:// URIs - decode and extract path
+                let path = decodeURIComponent(uri.slice(7));
+                // On Windows, file URIs are like file:///C:/path
+                // On Mac/Linux, they're like file:///path
+                if (path.length > 2 && path[0] === '/' && path[2] === ':') {
+                  // Windows path like /C:/... - remove leading slash
+                  path = path.slice(1);
+                }
+                return path;
+              }
+              return uri;
+            });
+        }
+
+        // Also try plain text (some apps provide paths this way)
+        if (paths.length === 0) {
+          const text = e.dataTransfer.getData('text/plain');
+          if (text && (text.startsWith('/') || /^[A-Za-z]:[\\\\/]/.test(text))) {
+            paths = [text.trim()];
+          }
+        }
+
+        if (paths.length > 0 && terminalInitialized[i]) {
+          // Quote paths with spaces
+          const quotedPaths = paths.map(p => p.includes(' ') ? '"' + p + '"' : p);
+          vscode.postMessage({
+            command: 'input',
+            terminalId: i,
+            data: quotedPaths.join(' ')
+          });
+          // Focus the terminal
+          if (terminals[i]) {
+            terminals[i].focus();
+          }
+        }
+      });
     }
 
     let currentFullscreen = -1;
+    let visibleTerminalCount = 1;
+
+    function updateTerminalCount() {
+      document.getElementById('terminal-count').textContent = visibleTerminalCount + ' / 4';
+    }
+
+    function updateGridLayout() {
+      const grid = document.querySelector('.grid');
+      grid.classList.remove('terminals-1', 'terminals-2');
+      if (visibleTerminalCount === 1) {
+        grid.classList.add('terminals-1');
+      } else if (visibleTerminalCount === 2) {
+        grid.classList.add('terminals-2');
+      }
+      // For 3-4 terminals, use default 2x2 grid (no extra class needed)
+
+      // Update add button state
+      updateAddButtonState();
+
+      // Update terminal count display
+      updateTerminalCount();
+
+      // Refit terminals after layout change
+      setTimeout(fitAll, 50);
+    }
+
+    function startTerminalWithProject(terminalId, projectPath, projectName, resume) {
+      // Initialize the terminal UI
+      initializeTerminal(terminalId);
+
+      // Update terminal title
+      const titleEl = document.getElementById('terminal-title-' + terminalId);
+      titleEl.textContent = projectName;
+      titleEl.classList.remove('empty');
+
+      // Store project info
+      terminalProjects[terminalId] = projectPath;
+
+      // Update status indicator
+      document.getElementById('status-' + terminalId).classList.add('active');
+
+      // Send message to extension to start the terminal
+      vscode.postMessage({
+        command: 'selectProject',
+        terminalId: terminalId,
+        projectPath: projectPath,
+        resume: resume
+      });
+    }
+
+    function updateAddButtonState() {
+      const globalSelect = document.getElementById('global-project-select');
+      const addBtn = document.getElementById('add-terminal-btn');
+      const hasProject = globalSelect.value !== '';
+      const hasRoom = visibleTerminalCount < 4;
+      addBtn.disabled = !hasProject || !hasRoom;
+    }
+
+    // Update button state when project selection changes
+    document.getElementById('global-project-select').addEventListener('change', updateAddButtonState);
+
+    function addTerminal() {
+      const globalSelect = document.getElementById('global-project-select');
+      const projectPath = globalSelect.value;
+      const projectName = globalSelect.options[globalSelect.selectedIndex]?.text || '';
+      const resume = document.getElementById('global-resume').checked;
+
+      // Require a project to be selected
+      if (!projectPath) {
+        return;
+      }
+
+      // Find the first empty terminal slot or add a new one
+      let targetTerminalId = -1;
+
+      // First, check if there's an empty visible terminal
+      for (let i = 0; i < visibleTerminalCount; i++) {
+        if (!terminalProjects[i]) {
+          targetTerminalId = i;
+          break;
+        }
+      }
+
+      // If no empty slot, add a new terminal if possible
+      if (targetTerminalId === -1) {
+        if (visibleTerminalCount >= 4) return;
+
+        targetTerminalId = visibleTerminalCount;
+        const container = document.getElementById('term-container-' + targetTerminalId);
+        container.classList.remove('hidden-slot');
+        visibleTerminalCount++;
+        updateGridLayout();
+      }
+
+      // Delay terminal start to allow layout to settle
+      const tid = targetTerminalId;
+      setTimeout(() => {
+        startTerminalWithProject(tid, projectPath, projectName, resume);
+      }, 100);
+    }
+
+    // Add terminal button event listener
+    document.getElementById('add-terminal-btn').addEventListener('click', addTerminal);
 
     function toggleFullscreen(terminalId) {
       const grid = document.querySelector('.grid');
@@ -930,8 +1148,8 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         });
       });
 
-      // Fit after initialization
-      setTimeout(() => {
+      // Fit after initialization - multiple attempts to handle layout timing
+      const doFit = () => {
         fitAddon.fit();
         const dims = fitAddon.proposeDimensions();
         if (dims) {
@@ -942,8 +1160,19 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
             rows: dims.rows
           });
         }
+      };
+
+      // Initial fit after short delay
+      setTimeout(() => {
+        doFit();
         term.focus();
-      }, 100);
+      }, 50);
+
+      // Second fit to catch any layout changes
+      setTimeout(doFit, 150);
+
+      // Third fit for good measure
+      setTimeout(doFit, 300);
     }
 
     // Fit all initialized terminals
@@ -999,6 +1228,7 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         case 'output':
           if (terminals[message.terminalId]) {
             terminals[message.terminalId].write(message.data);
+            terminals[message.terminalId].scrollToBottom();
           }
           break;
         case 'clear':
@@ -1014,13 +1244,12 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
           break;
         case 'killed':
           document.getElementById('status-' + message.terminalId).classList.remove('active', 'busy');
-          document.getElementById('kill-' + message.terminalId).classList.remove('visible');
-          document.getElementById('fullscreen-' + message.terminalId).classList.remove('visible');
-          // Show dropdown and resume, hide project name
-          document.getElementById('project-select-' + message.terminalId).classList.remove('hidden');
-          document.getElementById('project-select-' + message.terminalId).value = '';
-          document.getElementById('resume-label-' + message.terminalId).classList.remove('hidden');
-          document.getElementById('project-name-' + message.terminalId).classList.remove('visible');
+          // Reset terminal title
+          const killedTitle = document.getElementById('terminal-title-' + message.terminalId);
+          killedTitle.textContent = 'Terminal ' + (message.terminalId + 1);
+          killedTitle.classList.add('empty');
+          // Clear project tracking
+          terminalProjects[message.terminalId] = '';
           if (terminals[message.terminalId]) {
             terminals[message.terminalId].write('\\r\\n\\x1b[90m[Process terminated]\\x1b[0m\\r\\n');
           }
@@ -1058,15 +1287,24 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
               terminals[i].reset();
             }
             terminalInitialized[i] = false;
-            document.getElementById('terminal-' + i).innerHTML = '<div class="terminal-placeholder"><span class="terminal-placeholder-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span><span class="terminal-placeholder-text">Select a project to start Claude</span></div>';
-            document.getElementById('project-select-' + i).value = '';
-            document.getElementById('project-select-' + i).classList.remove('hidden');
-            document.getElementById('resume-label-' + i).classList.remove('hidden');
-            document.getElementById('project-name-' + i).classList.remove('visible');
+            terminalProjects[i] = '';
+            document.getElementById('terminal-' + i).innerHTML = '<div class="terminal-placeholder"><span class="terminal-placeholder-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span><span class="terminal-placeholder-text">Select a project and click "Add Terminal"</span></div>';
+            // Reset terminal title
+            const titleEl = document.getElementById('terminal-title-' + i);
+            titleEl.textContent = 'Terminal ' + (i + 1);
+            titleEl.classList.add('empty');
             document.getElementById('status-' + i).classList.remove('active', 'busy');
-            document.getElementById('kill-' + i).classList.remove('visible');
-            document.getElementById('fullscreen-' + i).classList.remove('visible');
+            // Hide terminals 1-3
+            if (i > 0) {
+              document.getElementById('term-container-' + i).classList.add('hidden-slot');
+            }
           }
+          // Reset global controls
+          document.getElementById('global-project-select').value = '';
+          document.getElementById('global-resume').checked = false;
+          // Reset to single terminal layout
+          visibleTerminalCount = 1;
+          updateGridLayout();
           break;
       }
     });
@@ -1132,28 +1370,29 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     }
 
     function updateProjectSelectors(projects) {
-      for (let i = 0; i < 4; i++) {
-        const select = document.getElementById('project-select-' + i);
-        const currentValue = select.value;
+      const select = document.getElementById('global-project-select');
+      const currentValue = select.value;
 
-        // Clear existing options except the first one
-        while (select.options.length > 1) {
-          select.remove(1);
-        }
-
-        // Add project options
-        projects.forEach(project => {
-          const option = document.createElement('option');
-          option.value = project.path;
-          option.textContent = project.name;
-          select.appendChild(option);
-        });
-
-        // Restore previous selection if still valid
-        if (currentValue) {
-          select.value = currentValue;
-        }
+      // Clear existing options except the first one
+      while (select.options.length > 1) {
+        select.remove(1);
       }
+
+      // Add project options
+      projects.forEach(project => {
+        const option = document.createElement('option');
+        option.value = project.path;
+        option.textContent = project.name;
+        select.appendChild(option);
+      });
+
+      // Restore previous selection if still valid
+      if (currentValue) {
+        select.value = currentValue;
+      }
+
+      // Update add button state based on selection
+      updateAddButtonState();
     }
 
     // Tell extension we're ready
