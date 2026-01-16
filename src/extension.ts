@@ -9,10 +9,14 @@ const SHELL_INIT_DELAY_MS = 500;
 const IDLE_TIMEOUT_MS = 2000;
 const VALID_TERMINAL_IDS = new Set([0, 1, 2, 3]);
 
+// Store provider reference for cleanup on deactivate
+let providerInstance: QuadTerminalViewProvider | undefined;
+
 export function activate(context: vscode.ExtensionContext) {
   console.log('Quad Terminal is now active!');
 
   const provider = new QuadTerminalViewProvider(context.extensionUri);
+  providerInstance = provider;
 
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider('quadTerminal.grid', provider, {
@@ -340,6 +344,10 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
+  public dispose() {
+    this.disposeAllResources();
+  }
+
   private _getHtmlForWebview(webview: vscode.Webview): string {
     return `<!DOCTYPE html>
 <html lang="en">
@@ -375,8 +383,9 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     .control-panel {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 8px 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 6px 10px;
       background: var(--vscode-editorGroupHeader-tabsBackground, #252526);
       border-bottom: 1px solid var(--vscode-editorGroup-border, var(--vscode-panel-border, #333));
       flex-shrink: 0;
@@ -384,13 +393,12 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     .control-panel-section {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
+      flex: 1;
+      min-width: 120px;
     }
     .control-panel-divider {
-      width: 1px;
-      height: 20px;
-      background: var(--vscode-editorGroup-border, #444);
-      opacity: 0.5;
+      display: none;
     }
     .control-label {
       font-size: 11px;
@@ -398,17 +406,19 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       text-transform: uppercase;
       letter-spacing: 0.5px;
       white-space: nowrap;
+      display: none;
     }
     .project-select {
       background: var(--vscode-input-background, #3c3c3c);
       color: var(--vscode-input-foreground, #ccc);
       border: 1px solid var(--vscode-input-border, transparent);
       border-radius: 4px;
-      padding: 5px 10px;
+      padding: 5px 8px;
       font-size: 12px;
       font-family: inherit;
       cursor: pointer;
-      min-width: 180px;
+      min-width: 0;
+      flex: 1;
       transition: all 0.15s ease;
     }
     .project-select:hover {
@@ -427,17 +437,21 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     .resume-label {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 12px;
+      gap: 4px;
+      font-size: 11px;
       color: var(--vscode-foreground, #ccc);
       cursor: pointer;
       user-select: none;
-      padding: 5px 8px;
+      padding: 4px 6px;
       border-radius: 4px;
       transition: all 0.12s ease;
+      white-space: nowrap;
     }
     .resume-label:hover {
       background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.4));
+    }
+    .resume-label span {
+      display: none;
     }
     .resume-checkbox {
       width: 14px;
@@ -449,8 +463,9 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     .add-terminal-btn {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 5px 12px;
+      justify-content: center;
+      gap: 0;
+      padding: 4px 6px;
       border-radius: 4px;
       border: none;
       background: var(--vscode-button-background, #0e639c);
@@ -459,6 +474,7 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       font-family: inherit;
       cursor: pointer;
       transition: all 0.15s ease;
+      flex-shrink: 0;
     }
     .add-terminal-btn:hover {
       background: var(--vscode-button-hoverBackground, #1177bb);
@@ -468,20 +484,43 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       cursor: not-allowed;
     }
     .add-terminal-btn svg {
-      width: 14px;
-      height: 14px;
+      width: 16px;
+      height: 16px;
       fill: currentColor;
+    }
+    .add-terminal-btn span {
+      display: none;
     }
     .terminal-count {
       font-size: 11px;
       color: var(--vscode-descriptionForeground, #888);
-      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    /* Wider panel - show labels */
+    @media (min-width: 350px) {
+      .control-panel {
+        gap: 10px;
+      }
+      .resume-label span {
+        display: inline;
+      }
+    }
+    @media (min-width: 450px) {
+      .add-terminal-btn {
+        gap: 6px;
+        padding: 4px 10px;
+      }
+      .add-terminal-btn span {
+        display: inline;
+      }
     }
 
     /* Grid Container */
     .grid-container {
       flex: 1;
       min-height: 0;
+      height: 0;
       position: relative;
     }
     .grid {
@@ -510,6 +549,8 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       overflow: hidden;
       background: var(--vscode-editor-background, #1e1e1e);
       transition: all 0.15s ease;
+      min-height: 0;
+      height: 100%;
     }
     .terminal-container:focus-within {
       z-index: 1;
@@ -636,6 +677,10 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       right: 0;
       bottom: 0;
       background: var(--vscode-editor-background, #1e1e1e);
+    }
+    .terminal-wrapper > div {
+      height: 100%;
+      width: 100%;
     }
     .terminal-placeholder {
       display: flex;
@@ -913,7 +958,7 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         // Try to get URI list (for files dragged from VS Code explorer or Finder)
         const uriList = e.dataTransfer.getData('text/uri-list');
         if (uriList) {
-          paths = uriList.split(/\r?\n/)
+          paths = uriList.split(/\\r?\\n/)
             .map(uri => uri.trim())
             .filter(uri => uri && !uri.startsWith('#'))
             .map(uri => {
@@ -935,7 +980,7 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         // Also try plain text (some apps provide paths this way)
         if (paths.length === 0) {
           const text = e.dataTransfer.getData('text/plain');
-          if (text && (text.startsWith('/') || /^[A-Za-z]:[\\\\/]/.test(text))) {
+          if (text && (text.startsWith('/') || /^[A-Za-z]:[\\\\\\/]/.test(text))) {
             paths = [text.trim()];
           }
         }
@@ -1403,4 +1448,10 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
   }
 }
 
-export function deactivate() {}
+export function deactivate() {
+  // Kill all terminal processes when extension deactivates
+  if (providerInstance) {
+    providerInstance.dispose();
+    providerInstance = undefined;
+  }
+}
