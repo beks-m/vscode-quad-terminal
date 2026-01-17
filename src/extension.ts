@@ -92,6 +92,15 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
             this.killTerminal(message.terminalId);
           }
           break;
+        case 'resolveDrop':
+          // Handle drop data that couldn't be resolved in the webview
+          if (this.isValidTerminalId(message.terminalId)) {
+            this.resolveDropData(message.terminalId, message.data);
+          }
+          break;
+        case 'openFile':
+          this.openFileInEditor(message.filePath, message.line, message.column, message.terminalId);
+          break;
       }
     });
 
@@ -100,9 +109,15 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       this.sendProjectsToWebview();
     });
 
+    // Update terminal theme when VS Code theme changes
+    const themeChangeListener = vscode.window.onDidChangeActiveColorTheme(() => {
+      this.sendTerminalConfig();
+    });
+
     // Clean up all resources when view is disposed
     webviewView.onDidDispose(() => {
       workspaceFolderListener.dispose();
+      themeChangeListener.dispose();
       this.disposeAllResources();
     });
   }
@@ -120,9 +135,10 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     const workbenchConfig = vscode.workspace.getConfiguration('workbench');
     const colorCustomizations = workbenchConfig.get<Record<string, string>>('colorCustomizations') || {};
 
-    // Try to get current color theme type for better defaults
-    const colorTheme = workbenchConfig.get<string>('colorTheme') || '';
-    const isDark = !colorTheme.toLowerCase().includes('light');
+    // Use VS Code's actual theme kind for reliable detection
+    // ColorThemeKind: Light = 1, Dark = 2, HighContrast = 3, HighContrastLight = 4
+    const themeKind = vscode.window.activeColorTheme.kind;
+    const isDark = themeKind === vscode.ColorThemeKind.Dark || themeKind === vscode.ColorThemeKind.HighContrast;
 
     // Default colors based on VS Code dark/light theme
     const defaultBg = isDark ? '#1e1e1e' : '#ffffff';
@@ -277,6 +293,94 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     if (ptyProcess) {
       this.cleanupTerminal(terminalId);
       this.sendToWebview('killed', { terminalId });
+    }
+  }
+
+  private resolveDropData(terminalId: number, data: { uriList?: string; text?: string; types?: string[] }) {
+    const paths: string[] = [];
+
+    // Helper to extract path from URI string
+    const extractPath = (uri: string): string | null => {
+      if (!uri) return null;
+      uri = uri.trim();
+      if (!uri || uri.startsWith('#')) return null;
+
+      if (uri.startsWith('file://')) {
+        try {
+          const fileUri = vscode.Uri.parse(uri);
+          return fileUri.fsPath;
+        } catch {
+          // Fallback: manual parsing
+          let filePath = decodeURIComponent(uri.slice(7));
+          if (filePath.length > 2 && filePath[0] === '/' && filePath[2] === ':') {
+            filePath = filePath.slice(1);
+          }
+          return filePath;
+        }
+      } else if (uri.startsWith('vscode-resource:') || uri.startsWith('vscode-webview-resource:')) {
+        // These can't be easily converted back, skip
+        return null;
+      } else if (uri.startsWith('/') || /^[A-Za-z]:[/\\]/.test(uri)) {
+        return uri;
+      }
+      return null;
+    };
+
+    // Process URI list
+    if (data.uriList) {
+      data.uriList.split(/\r?\n/).forEach(uri => {
+        const filePath = extractPath(uri);
+        if (filePath) paths.push(filePath);
+      });
+    }
+
+    // Process plain text
+    if (paths.length === 0 && data.text) {
+      data.text.split(/\r?\n/).forEach(line => {
+        const filePath = extractPath(line);
+        if (filePath) paths.push(filePath);
+      });
+    }
+
+    // Send resolved paths to terminal
+    if (paths.length > 0) {
+      const ptyProcess = this.ptyProcesses.get(terminalId);
+      if (ptyProcess) {
+        const quotedPaths = paths.map(p => p.includes(' ') ? `"${p}"` : p);
+        // Send to webview to display, and to PTY as input
+        this.sendToWebview('dropResolved', { terminalId, paths: quotedPaths.join(' ') });
+      }
+    }
+  }
+
+  private async openFileInEditor(filePath: string, line?: number, column?: number, terminalId?: number) {
+    try {
+      // Resolve relative paths using the terminal's working directory
+      let absolutePath = filePath;
+      if (!path.isAbsolute(filePath) && terminalId !== undefined) {
+        const projectPath = this.terminalProjects.get(terminalId);
+        if (projectPath) {
+          absolutePath = path.join(projectPath, filePath);
+        }
+      }
+
+      const uri = vscode.Uri.file(absolutePath);
+      const doc = await vscode.workspace.openTextDocument(uri);
+      const editor = await vscode.window.showTextDocument(doc, {
+        preview: false,
+        preserveFocus: false
+      });
+
+      // Navigate to line and column if specified
+      if (line !== undefined && line > 0) {
+        const lineIndex = line - 1; // VS Code uses 0-based line numbers
+        const colIndex = (column !== undefined && column > 0) ? column - 1 : 0;
+        const position = new vscode.Position(lineIndex, colIndex);
+        editor.selection = new vscode.Selection(position, position);
+        editor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenter);
+      }
+    } catch (error) {
+      console.error(`[QuadTerminal] Failed to open file: ${filePath}`, error);
     }
   }
 
@@ -719,9 +823,14 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       height: 100%;
       width: 100%;
       padding: 4px 8px 0 8px;
+      box-sizing: border-box;
     }
     .xterm-viewport {
       overflow-y: auto !important;
+      background-color: inherit !important;
+    }
+    .xterm-screen {
+      background-color: inherit;
     }
     .xterm-viewport::-webkit-scrollbar {
       width: 8px;
@@ -752,6 +861,29 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       right: 0;
       bottom: 0;
       z-index: 10;
+    }
+
+    /* Light theme adjustments */
+    body.vscode-light .control-panel {
+      background: var(--vscode-editorGroupHeader-tabsBackground, #f3f3f3);
+      border-bottom-color: var(--vscode-editorGroup-border, #e7e7e7);
+    }
+    body.vscode-light .terminal-header {
+      background: var(--vscode-editorGroupHeader-tabsBackground, #f3f3f3);
+      border-bottom-color: var(--vscode-editorGroup-border, #e7e7e7);
+    }
+    body.vscode-light .terminal-container:focus-within .terminal-header {
+      background: var(--vscode-tab-activeBackground, #ffffff);
+    }
+    body.vscode-light .grid {
+      background: var(--vscode-editorGroup-border, #e7e7e7);
+    }
+    body.vscode-light .terminal-placeholder-icon {
+      background: var(--vscode-input-background, #f0f0f0);
+    }
+    body.vscode-light .project-select {
+      background: var(--vscode-input-background, #ffffff);
+      border-color: var(--vscode-input-border, #cecece);
     }
   </style>
 </head>
@@ -955,45 +1087,78 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
 
         let paths = [];
 
-        // Try to get URI list (for files dragged from VS Code explorer or Finder)
-        const uriList = e.dataTransfer.getData('text/uri-list');
-        if (uriList) {
-          paths = uriList.split(/\\r?\\n/)
-            .map(uri => uri.trim())
-            .filter(uri => uri && !uri.startsWith('#'))
-            .map(uri => {
-              if (uri.startsWith('file://')) {
-                // Handle file:// URIs - decode and extract path
-                let path = decodeURIComponent(uri.slice(7));
-                // On Windows, file URIs are like file:///C:/path
-                // On Mac/Linux, they're like file:///path
-                if (path.length > 2 && path[0] === '/' && path[2] === ':') {
-                  // Windows path like /C:/... - remove leading slash
-                  path = path.slice(1);
-                }
-                return path;
-              }
-              return uri;
-            });
+        // Helper to extract path from URI
+        function extractPath(uri) {
+          if (!uri) return null;
+          uri = uri.trim();
+          if (!uri || uri.startsWith('#')) return null;
+
+          if (uri.startsWith('file://')) {
+            // Handle file:// URIs - decode and extract path
+            let path = decodeURIComponent(uri.slice(7));
+            // On Windows, file URIs are like file:///C:/path
+            // On Mac/Linux, they're like file:///path
+            if (path.length > 2 && path[0] === '/' && path[2] === ':') {
+              // Windows path like /C:/... - remove leading slash
+              path = path.slice(1);
+            }
+            return path;
+          } else if (uri.startsWith('/') || /^[A-Za-z]:[\\\\\\/]/.test(uri)) {
+            // Already a path
+            return uri;
+          }
+          return null;
         }
 
-        // Also try plain text (some apps provide paths this way)
-        if (paths.length === 0) {
-          const text = e.dataTransfer.getData('text/plain');
-          if (text && (text.startsWith('/') || /^[A-Za-z]:[\\\\\\/]/.test(text))) {
-            paths = [text.trim()];
+        // Collect all available data for resolution
+        const uriList = e.dataTransfer.getData('text/uri-list');
+        const text = e.dataTransfer.getData('text/plain');
+        const types = Array.from(e.dataTransfer.types || []);
+
+        // Try to get URI list (standard format)
+        if (uriList) {
+          uriList.split(/\\r?\\n/).forEach(uri => {
+            const path = extractPath(uri);
+            if (path) paths.push(path);
+          });
+        }
+
+        // Try plain text
+        if (paths.length === 0 && text) {
+          text.split(/\\r?\\n/).forEach(line => {
+            const path = extractPath(line);
+            if (path) paths.push(path);
+          });
+        }
+
+        // Try to get paths from Files API (external file drops)
+        if (paths.length === 0 && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          for (let f = 0; f < e.dataTransfer.files.length; f++) {
+            const file = e.dataTransfer.files[f];
+            if (file.path) {
+              paths.push(file.path);
+            }
           }
         }
 
         if (paths.length > 0 && terminalInitialized[i]) {
-          // Quote paths with spaces
+          // We found paths locally, send them directly
           const quotedPaths = paths.map(p => p.includes(' ') ? '"' + p + '"' : p);
           vscode.postMessage({
             command: 'input',
             terminalId: i,
             data: quotedPaths.join(' ')
           });
-          // Focus the terminal
+          if (terminals[i]) {
+            terminals[i].focus();
+          }
+        } else if ((uriList || text) && terminalInitialized[i]) {
+          // Send to extension for resolution (handles VS Code internal URIs)
+          vscode.postMessage({
+            command: 'resolveDrop',
+            terminalId: i,
+            data: { uriList, text, types }
+          });
           if (terminals[i]) {
             terminals[i].focus();
           }
@@ -1028,6 +1193,52 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       setTimeout(fitAll, 50);
     }
 
+    function removeTerminalSlot(terminalId) {
+      const container = document.getElementById('term-container-' + terminalId);
+      container.classList.add('hidden-slot');
+
+      // Recalculate visible terminal count
+      visibleTerminalCount = 0;
+      for (let i = 0; i < 4; i++) {
+        const c = document.getElementById('term-container-' + i);
+        if (!c.classList.contains('hidden-slot')) {
+          visibleTerminalCount++;
+        }
+      }
+
+      // Ensure at least one terminal slot is visible (show placeholder)
+      if (visibleTerminalCount === 0) {
+        document.getElementById('term-container-0').classList.remove('hidden-slot');
+        visibleTerminalCount = 1;
+        // Restore placeholder content
+        const termEl = document.getElementById('terminal-0');
+        if (termEl && !termEl.querySelector('.terminal-placeholder')) {
+          termEl.innerHTML = '<div class="terminal-placeholder"><span class="terminal-placeholder-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span><span class="terminal-placeholder-text">Select a project and click "Add Terminal"</span></div>';
+          terminalInitialized[0] = false;
+        }
+      }
+
+      updateGridLayout();
+    }
+
+    function hasAvailableSlot() {
+      // Check for visible empty slot (no active project)
+      for (let i = 0; i < 4; i++) {
+        const container = document.getElementById('term-container-' + i);
+        if (!container.classList.contains('hidden-slot') && !terminalProjects[i]) {
+          return true;
+        }
+      }
+      // Check for hidden slot
+      for (let i = 0; i < 4; i++) {
+        const container = document.getElementById('term-container-' + i);
+        if (container.classList.contains('hidden-slot')) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     function startTerminalWithProject(terminalId, projectPath, projectName, resume) {
       // Initialize the terminal UI
       initializeTerminal(terminalId);
@@ -1056,8 +1267,7 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       const globalSelect = document.getElementById('global-project-select');
       const addBtn = document.getElementById('add-terminal-btn');
       const hasProject = globalSelect.value !== '';
-      const hasRoom = visibleTerminalCount < 4;
-      addBtn.disabled = !hasProject || !hasRoom;
+      addBtn.disabled = !hasProject || !hasAvailableSlot();
     }
 
     // Update button state when project selection changes
@@ -1074,26 +1284,35 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         return;
       }
 
-      // Find the first empty terminal slot or add a new one
+      // Find an available slot
       let targetTerminalId = -1;
 
-      // First, check if there's an empty visible terminal
-      for (let i = 0; i < visibleTerminalCount; i++) {
-        if (!terminalProjects[i]) {
+      // First, check for a visible empty slot (no active project)
+      for (let i = 0; i < 4; i++) {
+        const container = document.getElementById('term-container-' + i);
+        if (!container.classList.contains('hidden-slot') && !terminalProjects[i]) {
           targetTerminalId = i;
           break;
         }
       }
 
-      // If no empty slot, add a new terminal if possible
+      // If no visible empty slot, find a hidden slot and show it
       if (targetTerminalId === -1) {
-        if (visibleTerminalCount >= 4) return;
+        for (let i = 0; i < 4; i++) {
+          const container = document.getElementById('term-container-' + i);
+          if (container.classList.contains('hidden-slot')) {
+            targetTerminalId = i;
+            container.classList.remove('hidden-slot');
+            visibleTerminalCount++;
+            updateGridLayout();
+            break;
+          }
+        }
+      }
 
-        targetTerminalId = visibleTerminalCount;
-        const container = document.getElementById('term-container-' + targetTerminalId);
-        container.classList.remove('hidden-slot');
-        visibleTerminalCount++;
-        updateGridLayout();
+      // No available slot
+      if (targetTerminalId === -1) {
+        return;
       }
 
       // Delay terminal start to allow layout to settle
@@ -1164,6 +1383,54 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       term.loadAddon(fitAddon);
 
       term.open(container);
+
+      // Register file link provider for clickable file paths
+      term.registerLinkProvider({
+        provideLinks: (bufferLineNumber, callback) => {
+          const line = term.buffer.active.getLine(bufferLineNumber);
+          if (!line) {
+            callback(undefined);
+            return;
+          }
+          const lineText = line.translateToString(true);
+          const links = [];
+
+          // Regex to match file paths with optional line:column
+          // Matches: /path/to/file.ts:123:45, src/file.ts:10, ./file.ts, etc.
+          const filePathRegex = /(?:^|[\\s"'\\[\\(])(((?:\\.{1,2}\\/|\\/)(?:[^\\s:*?"<>|]+\\/)*[^\\s:*?"<>|]+|[a-zA-Z]:[\\\\](?:[^\\s:*?"<>|]+[\\\\])*[^\\s:*?"<>|]+|[a-zA-Z0-9_\\-]+(?:\\/[a-zA-Z0-9_\\-.]+)+\\.[a-zA-Z0-9]+))(?::(\\d+))?(?::(\\d+))?/g;
+
+          let match;
+          while ((match = filePathRegex.exec(lineText)) !== null) {
+            const fullMatch = match[0];
+            const filePath = match[1];
+            const lineNum = match[3] ? parseInt(match[3], 10) : undefined;
+            const colNum = match[4] ? parseInt(match[4], 10) : undefined;
+
+            // Calculate start position (accounting for leading whitespace/quotes in match)
+            const startIndex = match.index + (fullMatch.length - fullMatch.trimStart().length);
+            const linkText = fullMatch.trimStart();
+
+            links.push({
+              range: {
+                start: { x: startIndex + 1, y: bufferLineNumber + 1 },
+                end: { x: startIndex + linkText.length + 1, y: bufferLineNumber + 1 }
+              },
+              text: linkText,
+              activate: () => {
+                vscode.postMessage({
+                  command: 'openFile',
+                  filePath: filePath,
+                  line: lineNum,
+                  column: colNum,
+                  terminalId: i
+                });
+              }
+            });
+          }
+
+          callback(links.length > 0 ? links : undefined);
+        }
+      });
 
       // Focus terminal on click
       container.addEventListener('click', () => {
@@ -1272,8 +1539,14 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
           break;
         case 'output':
           if (terminals[message.terminalId]) {
-            terminals[message.terminalId].write(message.data);
-            terminals[message.terminalId].scrollToBottom();
+            const term = terminals[message.terminalId];
+            // Check if user is at bottom before writing
+            const isAtBottom = term.buffer.active.viewportY >= term.buffer.active.baseY;
+            term.write(message.data);
+            // Only auto-scroll if user was already at bottom
+            if (isAtBottom) {
+              term.scrollToBottom();
+            }
           }
           break;
         case 'clear':
@@ -1295,13 +1568,14 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
           killedTitle.classList.add('empty');
           // Clear project tracking
           terminalProjects[message.terminalId] = '';
-          if (terminals[message.terminalId]) {
-            terminals[message.terminalId].write('\\r\\n\\x1b[90m[Process terminated]\\x1b[0m\\r\\n');
-          }
+
           // Exit fullscreen if this terminal was fullscreened
           if (currentFullscreen === message.terminalId) {
             toggleFullscreen(message.terminalId);
           }
+
+          // Hide this terminal and let remaining terminals expand
+          removeTerminalSlot(message.terminalId);
           break;
         case 'status':
           const statusEl = document.getElementById('status-' + message.terminalId);
@@ -1311,6 +1585,19 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
           } else {
             statusEl.classList.remove('busy');
             statusEl.classList.add('active');
+          }
+          break;
+        case 'dropResolved':
+          // Resolved file paths from extension, input them into terminal
+          if (message.paths && terminalInitialized[message.terminalId]) {
+            vscode.postMessage({
+              command: 'input',
+              terminalId: message.terminalId,
+              data: message.paths
+            });
+            if (terminals[message.terminalId]) {
+              terminals[message.terminalId].focus();
+            }
           }
           break;
         case 'refresh':
@@ -1355,29 +1642,43 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     });
 
     function applyTerminalConfig(config) {
-      // Build new theme from received config, using existing fallbacks
+      // Apply theme class to body for CSS styling
+      document.body.classList.remove('vscode-dark', 'vscode-light', 'vscode-high-contrast');
+      if (config.isDark) {
+        document.body.classList.add('vscode-dark');
+      } else {
+        document.body.classList.add('vscode-light');
+      }
+
+      // Get default colors based on theme
+      const defaultBg = config.isDark ? '#1e1e1e' : '#ffffff';
+      const defaultFg = config.isDark ? '#cccccc' : '#333333';
+      const defaultCursor = config.isDark ? '#ffffff' : '#333333';
+      const defaultSelection = config.isDark ? '#264f78' : '#add6ff';
+
+      // Build new theme from received config, using theme-appropriate fallbacks
       const newTheme = {
-        background: config.colors.background || theme.background,
-        foreground: config.colors.foreground || theme.foreground,
-        cursor: config.colors.cursor || theme.cursor,
-        cursorAccent: config.colors.cursorAccent || theme.cursorAccent,
-        selectionBackground: config.colors.selectionBackground || theme.selectionBackground,
-        black: config.colors.black || theme.black,
-        red: config.colors.red || theme.red,
-        green: config.colors.green || theme.green,
-        yellow: config.colors.yellow || theme.yellow,
-        blue: config.colors.blue || theme.blue,
-        magenta: config.colors.magenta || theme.magenta,
-        cyan: config.colors.cyan || theme.cyan,
-        white: config.colors.white || theme.white,
-        brightBlack: config.colors.brightBlack || theme.brightBlack,
-        brightRed: config.colors.brightRed || theme.brightRed,
-        brightGreen: config.colors.brightGreen || theme.brightGreen,
-        brightYellow: config.colors.brightYellow || theme.brightYellow,
-        brightBlue: config.colors.brightBlue || theme.brightBlue,
-        brightMagenta: config.colors.brightMagenta || theme.brightMagenta,
-        brightCyan: config.colors.brightCyan || theme.brightCyan,
-        brightWhite: config.colors.brightWhite || theme.brightWhite
+        background: config.colors.background || defaultBg,
+        foreground: config.colors.foreground || defaultFg,
+        cursor: config.colors.cursor || defaultCursor,
+        cursorAccent: config.colors.cursorAccent || (config.isDark ? '#000000' : '#ffffff'),
+        selectionBackground: config.colors.selectionBackground || defaultSelection,
+        black: config.colors.black || (config.isDark ? '#000000' : '#000000'),
+        red: config.colors.red || (config.isDark ? '#cd3131' : '#cd3131'),
+        green: config.colors.green || (config.isDark ? '#0dbc79' : '#00bc00'),
+        yellow: config.colors.yellow || (config.isDark ? '#e5e510' : '#949800'),
+        blue: config.colors.blue || (config.isDark ? '#2472c8' : '#0451a5'),
+        magenta: config.colors.magenta || (config.isDark ? '#bc3fbc' : '#bc05bc'),
+        cyan: config.colors.cyan || (config.isDark ? '#11a8cd' : '#0598bc'),
+        white: config.colors.white || (config.isDark ? '#e5e5e5' : '#555555'),
+        brightBlack: config.colors.brightBlack || (config.isDark ? '#666666' : '#666666'),
+        brightRed: config.colors.brightRed || (config.isDark ? '#f14c4c' : '#cd3131'),
+        brightGreen: config.colors.brightGreen || (config.isDark ? '#23d18b' : '#14ce14'),
+        brightYellow: config.colors.brightYellow || (config.isDark ? '#f5f543' : '#b5ba00'),
+        brightBlue: config.colors.brightBlue || (config.isDark ? '#3b8eea' : '#0451a5'),
+        brightMagenta: config.colors.brightMagenta || (config.isDark ? '#d670d6' : '#bc05bc'),
+        brightCyan: config.colors.brightCyan || (config.isDark ? '#29b8db' : '#0598bc'),
+        brightWhite: config.colors.brightWhite || (config.isDark ? '#ffffff' : '#a5a5a5')
       };
 
       // Update global theme for new terminals
@@ -1389,6 +1690,9 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         el.style.background = bgColor;
       });
       document.querySelectorAll('.terminal-wrapper').forEach(el => {
+        el.style.background = bgColor;
+      });
+      document.querySelectorAll('.xterm').forEach(el => {
         el.style.background = bgColor;
       });
       document.body.style.background = bgColor;
