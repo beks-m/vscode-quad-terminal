@@ -3,6 +3,14 @@ import * as os from 'os';
 import * as pty from 'node-pty';
 import * as path from 'path';
 
+interface TabState {
+  ptyProcesses: Map<number, pty.IPty>;
+  terminalProjects: Map<number, string>;
+  idleTimers: Map<number, NodeJS.Timeout>;
+  terminalBusy: Map<number, boolean>;
+  claudeCommandTimeouts: Map<number, NodeJS.Timeout>;
+}
+
 // Constants
 const TERMINAL_COUNT = 4;
 const SHELL_INIT_DELAY_MS = 500;
@@ -39,13 +47,21 @@ export function activate(context: vscode.ExtensionContext) {
 
 class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
   private _view?: vscode.WebviewView;
-  private ptyProcesses: Map<number, pty.IPty> = new Map();
-  private terminalProjects: Map<number, string> = new Map();
-  private idleTimers: Map<number, NodeJS.Timeout> = new Map();
-  private terminalBusy: Map<number, boolean> = new Map();
-  private claudeCommandTimeouts: Map<number, NodeJS.Timeout> = new Map();
+  private tabs: Map<number, TabState> = new Map();
+  private activeTabId: number = 1;
+  private nextTabId: number = 2;
 
   constructor(private readonly _extensionUri: vscode.Uri) {}
+
+  private createTabState(): TabState {
+    return {
+      ptyProcesses: new Map(),
+      terminalProjects: new Map(),
+      idleTimers: new Map(),
+      terminalBusy: new Map(),
+      claudeCommandTimeouts: new Map()
+    };
+  }
 
   private isValidTerminalId(terminalId: number): boolean {
     return VALID_TERMINAL_IDS.has(terminalId);
@@ -57,6 +73,11 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     _token: vscode.CancellationToken
   ) {
     this._view = webviewView;
+
+    // Initialize first tab
+    if (this.tabs.size === 0) {
+      this.tabs.set(1, this.createTabState());
+    }
 
     webviewView.webview.options = {
       enableScripts: true,
