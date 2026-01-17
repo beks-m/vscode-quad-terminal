@@ -1318,9 +1318,28 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
   <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.9.0/lib/addon-fit.min.js"></script>
   <script>
     const vscode = acquireVsCodeApi();
-    const terminals = [];
-    const fitAddons = [];
-    const terminalInitialized = [false, false, false, false];
+
+    // Tab state management
+    const tabState = {
+      1: {
+        terminals: [],
+        fitAddons: [],
+        terminalInitialized: [false, false, false, false],
+        terminalProjects: ['', '', '', ''],
+        visibleTerminalCount: 1
+      }
+    };
+    let activeTabId = 1;
+    let nextTabId = 2;
+
+    // Helper to get current tab state
+    function getActiveTab() {
+      return tabState[activeTabId];
+    }
+
+    function getTab(tabId) {
+      return tabState[tabId];
+    }
 
     // Get VS Code terminal colors from CSS variables
     function getVSCodeColor(varName, fallback) {
@@ -1357,8 +1376,7 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
                                getVSCodeColor('--vscode-editor-font-family', 'Menlo, Monaco, "Courier New", monospace');
     const terminalFontSize = parseInt(getVSCodeColor('--vscode-terminal-font-size', '12')) || 12;
 
-    // Track which terminals have active sessions
-    const terminalProjects = ['', '', '', ''];
+    // terminalProjects is now per-tab in tabState
 
     // Setup kill and fullscreen buttons for each terminal
     for (let i = 0; i < 4; i++) {
@@ -1528,14 +1546,129 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     }
 
     let currentFullscreen = -1;
-    let visibleTerminalCount = 1;
+    // visibleTerminalCount is now per-tab in tabState
 
     function updateTerminalCount() {
-      document.getElementById('terminal-count').textContent = visibleTerminalCount + ' / 4';
+      const tab = getActiveTab();
+      document.getElementById('terminal-count').textContent = (tab ? tab.visibleTerminalCount : 1) + ' / 4';
+    }
+
+    function createTab(tabId) {
+      tabState[tabId] = {
+        terminals: [],
+        fitAddons: [],
+        terminalInitialized: [false, false, false, false],
+        terminalProjects: ['', '', '', ''],
+        visibleTerminalCount: 1
+      };
+
+      // Create tab button
+      const tabBar = document.getElementById('tab-bar');
+      const addTabBtn = document.getElementById('add-tab-btn');
+
+      const tabBtn = document.createElement('button');
+      tabBtn.className = 'tab-button';
+      tabBtn.dataset.tabId = tabId;
+      tabBtn.innerHTML = '<span class="tab-label">Tab ' + tabId + '</span><span class="tab-activity"></span><button class="tab-close" title="Close tab"><svg viewBox="0 0 16 16"><path d="M8 8.707l3.646 3.647.708-.707L8.707 8l3.647-3.646-.707-.708L8 7.293 4.354 3.646l-.707.708L7.293 8l-3.646 3.646.707.708L8 8.707z"/></svg></button>';
+      tabBar.insertBefore(tabBtn, addTabBtn);
+
+      // Create grid for this tab
+      const gridContainer = document.querySelector('.grid-container');
+      const newGrid = createGridForTab(tabId);
+      gridContainer.appendChild(newGrid);
+
+      // Attach event listeners
+      attachTabButtonListeners(tabBtn);
+
+      // Switch to new tab
+      switchTab(tabId);
+    }
+
+    function createGridForTab(tabId) {
+      const grid = document.createElement('div');
+      grid.className = 'grid terminals-1';
+      grid.dataset.tabId = tabId;
+      grid.style.display = 'none';
+
+      for (let i = 0; i < 4; i++) {
+        const container = document.createElement('div');
+        container.className = i === 0 ? 'terminal-container' : 'terminal-container hidden-slot';
+        container.id = 'term-container-' + tabId + '-' + i;
+        container.innerHTML = '<div class="terminal-header"><span class="terminal-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span><span class="terminal-title empty" id="terminal-title-' + tabId + '-' + i + '">Terminal ' + (i + 1) + '</span><div class="header-actions"><button class="action-btn pick-files-btn" id="pick-files-' + tabId + '-' + i + '" title="Insert file path"><svg viewBox="0 0 16 16"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v.64c.57.265.94.876.856 1.546l-.64 5.124A2.5 2.5 0 0 1 12.733 15H3.266a2.5 2.5 0 0 1-2.481-2.19l-.64-5.124A1.5 1.5 0 0 1 1 6.14V3.5zM2 6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3H2.5a.5.5 0 0 0-.5.5V6z"/></svg></button><button class="action-btn fullscreen-btn" id="fullscreen-' + tabId + '-' + i + '" title="Toggle fullscreen"><svg class="expand-icon" viewBox="0 0 16 16"><path d="M3 3v4h1V4h3V3H3zm10 0h-4v1h3v3h1V3zM4 12v-3H3v4h4v-1H4zm8-3v3h-3v1h4V9h-1z"/></svg><svg class="collapse-icon" style="display:none" viewBox="0 0 16 16"><path d="M2 2h5v5H2V2zm1 1v3h3V3H3zm7-1h5v5h-5V2zm1 1v3h3V3h-3zM2 9h5v5H2V9zm1 1v3h3v-3H3zm7-1h5v5h-5V9zm1 1v3h3v-3h-3z"/></svg></button><button class="action-btn kill-btn" id="kill-' + tabId + '-' + i + '" title="Kill terminal"><svg viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg></button></div><span class="status-indicator" id="status-' + tabId + '-' + i + '"></span></div><div class="terminal-wrapper"><div id="terminal-' + tabId + '-' + i + '"><div class="terminal-placeholder"><span class="terminal-placeholder-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span><span class="terminal-placeholder-text">Select a project and click "Add Terminal"</span></div></div></div>';
+        grid.appendChild(container);
+      }
+
+      return grid;
+    }
+
+    function switchTab(tabId) {
+      if (!tabState[tabId]) return;
+
+      activeTabId = tabId;
+
+      // Update tab buttons
+      document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.tabId) === tabId);
+      });
+
+      // Show/hide grids
+      document.querySelectorAll('.grid').forEach(grid => {
+        grid.style.display = parseInt(grid.dataset.tabId) === tabId ? '' : 'none';
+      });
+
+      // Clear activity indicator
+      const activeBtn = document.querySelector('.tab-button[data-tab-id="' + tabId + '"]');
+      if (activeBtn) activeBtn.classList.remove('has-activity');
+
+      // Update terminal count for this tab
+      updateTerminalCount();
+
+      // Refit terminals
+      setTimeout(fitAll, 50);
+
+      vscode.postMessage({ command: 'switchTab', tabId: tabId });
+    }
+
+    function closeTab(tabId) {
+      vscode.postMessage({ command: 'closeTab', tabId: tabId });
+    }
+
+    function removeTab(tabId) {
+      // Remove tab button
+      const tabBtn = document.querySelector('.tab-button[data-tab-id="' + tabId + '"]');
+      if (tabBtn) tabBtn.remove();
+
+      // Remove grid
+      const grid = document.querySelector('.grid[data-tab-id="' + tabId + '"]');
+      if (grid) grid.remove();
+
+      // Clean up state
+      delete tabState[tabId];
+    }
+
+    function attachTabButtonListeners(tabBtn) {
+      const tabId = parseInt(tabBtn.dataset.tabId);
+
+      tabBtn.addEventListener('click', function(e) {
+        if (!e.target.closest('.tab-close')) {
+          switchTab(tabId);
+        }
+      });
+
+      const closeBtn = tabBtn.querySelector('.tab-close');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          closeTab(tabId);
+        });
+      }
     }
 
     function updateGridLayout() {
-      const grid = document.querySelector('.grid');
+      const tab = getActiveTab();
+      const visibleTerminalCount = tab ? tab.visibleTerminalCount : 1;
+      const grid = document.querySelector('.grid[data-tab-id="' + activeTabId + '"]');
+      if (!grid) return;
       grid.classList.remove('terminals-1', 'terminals-2');
       if (visibleTerminalCount === 1) {
         grid.classList.add('terminals-1');
@@ -2170,8 +2303,21 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
           document.getElementById('global-project-select').value = '';
           document.getElementById('global-resume').checked = false;
           // Reset to single terminal layout
-          visibleTerminalCount = 1;
+          if (getActiveTab()) getActiveTab().visibleTerminalCount = 1;
           updateGridLayout();
+          break;
+        case 'tabCreated':
+          createTab(message.tabId);
+          nextTabId = message.tabId + 1;
+          break;
+        case 'tabClosed':
+          removeTab(message.tabId);
+          if (message.newActiveTabId) {
+            switchTab(message.newActiveTabId);
+          }
+          break;
+        case 'tabSwitched':
+          switchTab(message.tabId);
           break;
       }
     });
@@ -2277,6 +2423,17 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
 
       // Update add button state based on selection
       updateAddButtonState();
+    }
+
+    // Add tab button event listener
+    document.getElementById('add-tab-btn').addEventListener('click', function() {
+      vscode.postMessage({ command: 'createTab' });
+    });
+
+    // Attach listener to initial tab button (Tab 1)
+    const initialTabBtn = document.querySelector('.tab-button[data-tab-id="1"]');
+    if (initialTabBtn) {
+      attachTabButtonListeners(initialTabBtn);
     }
 
     // Tell extension we're ready
