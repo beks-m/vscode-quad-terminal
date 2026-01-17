@@ -138,7 +138,9 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
           vscode.env.openExternal(vscode.Uri.parse(message.url));
           break;
         case 'pickFiles':
-          this.pickFilesForTerminal(message.tabId || this.activeTabId, message.terminalId);
+          if (this.isValidTerminalId(message.terminalId)) {
+            this.pickFilesForTerminal(message.tabId || this.activeTabId, message.terminalId);
+          }
           break;
         case 'createTab':
           this.createTab();
@@ -502,9 +504,13 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     }
 
     const timer = setTimeout(() => {
-      tabState.terminalBusy.set(terminalId, false);
+      // Re-fetch tabState inside closure to handle tab deletion during timeout
+      const currentTabState = this.getTabState(tabId);
+      if (!currentTabState) return;
+
+      currentTabState.terminalBusy.set(terminalId, false);
       this.sendToWebview('status', { tabId, terminalId, status: 'idle' });
-      tabState.idleTimers.delete(terminalId);
+      currentTabState.idleTimers.delete(terminalId);
     }, IDLE_TIMEOUT_MS);
     tabState.idleTimers.set(terminalId, timer);
   }
@@ -2536,6 +2542,36 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     if (initialTabBtn) {
       attachTabButtonListeners(initialTabBtn);
     }
+
+    // Keyboard shortcuts for tab management
+    document.addEventListener('keydown', function(e) {
+      // Ctrl/Cmd+T: New tab
+      if ((e.ctrlKey || e.metaKey) && e.key === 't') {
+        e.preventDefault();
+        vscode.postMessage({ command: 'createTab' });
+      }
+      // Ctrl/Cmd+W: Close current tab
+      if ((e.ctrlKey || e.metaKey) && e.key === 'w') {
+        e.preventDefault();
+        closeTab(activeTabId);
+      }
+      // Ctrl+Tab: Next tab
+      if (e.ctrlKey && e.key === 'Tab' && !e.shiftKey) {
+        e.preventDefault();
+        var tabIds = Object.keys(tabState).map(Number).sort(function(a, b) { return a - b; });
+        var currentIndex = tabIds.indexOf(activeTabId);
+        var nextIndex = (currentIndex + 1) % tabIds.length;
+        switchTab(tabIds[nextIndex]);
+      }
+      // Ctrl+Shift+Tab: Previous tab
+      if (e.ctrlKey && e.key === 'Tab' && e.shiftKey) {
+        e.preventDefault();
+        var tabIds = Object.keys(tabState).map(Number).sort(function(a, b) { return a - b; });
+        var currentIndex = tabIds.indexOf(activeTabId);
+        var prevIndex = (currentIndex - 1 + tabIds.length) % tabIds.length;
+        switchTab(tabIds[prevIndex]);
+      }
+    });
 
     // Tell extension we're ready
     vscode.postMessage({ command: 'ready' });
