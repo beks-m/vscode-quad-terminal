@@ -1202,26 +1202,26 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     <!-- Grid Container -->
     <div class="grid-container">
       <div class="grid terminals-1" data-tab-id="1">
-        <div class="terminal-container" id="term-container-0">
+        <div class="terminal-container" id="term-container-1-0">
           <div class="terminal-header">
             <span class="terminal-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
-            <span class="terminal-title empty" id="terminal-title-0">Terminal 1</span>
+            <span class="terminal-title empty" id="terminal-title-1-0">Terminal 1</span>
             <div class="header-actions">
-              <button class="action-btn pick-files-btn" id="pick-files-0" title="Insert file path">
+              <button class="action-btn pick-files-btn" id="pick-files-1-0" title="Insert file path">
                 <svg viewBox="0 0 16 16"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v.64c.57.265.94.876.856 1.546l-.64 5.124A2.5 2.5 0 0 1 12.733 15H3.266a2.5 2.5 0 0 1-2.481-2.19l-.64-5.124A1.5 1.5 0 0 1 1 6.14V3.5zM2 6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3H2.5a.5.5 0 0 0-.5.5V6z"/></svg>
               </button>
-              <button class="action-btn fullscreen-btn" id="fullscreen-0" title="Toggle fullscreen">
+              <button class="action-btn fullscreen-btn" id="fullscreen-1-0" title="Toggle fullscreen">
                 <svg class="expand-icon" viewBox="0 0 16 16"><path d="M3 3v4h1V4h3V3H3zm10 0h-4v1h3v3h1V3zM4 12v-3H3v4h4v-1H4zm8-3v3h-3v1h4V9h-1z"/></svg>
                 <svg class="collapse-icon" style="display:none" viewBox="0 0 16 16"><path d="M2 2h5v5H2V2zm1 1v3h3V3H3zm7-1h5v5h-5V2zm1 1v3h3V3h-3zM2 9h5v5H2V9zm1 1v3h3v-3H3zm7-1h5v5h-5V9zm1 1v3h3v-3h-3z"/></svg>
               </button>
-              <button class="action-btn kill-btn" id="kill-0" title="Kill terminal">
+              <button class="action-btn kill-btn" id="kill-1-0" title="Kill terminal">
                 <svg viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
               </button>
             </div>
-            <span class="status-indicator" id="status-0"></span>
+            <span class="status-indicator" id="status-1-0"></span>
           </div>
           <div class="terminal-wrapper">
-            <div id="terminal-0">
+            <div id="terminal-1-0">
               <div class="terminal-placeholder">
                 <span class="terminal-placeholder-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
                 <span class="terminal-placeholder-text">Select a project and click "Add Terminal"</span>
@@ -1229,26 +1229,26 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
             </div>
           </div>
         </div>
-        <div class="terminal-container hidden-slot" id="term-container-1">
+        <div class="terminal-container hidden-slot" id="term-container-1-1">
           <div class="terminal-header">
             <span class="terminal-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
-            <span class="terminal-title empty" id="terminal-title-1">Terminal 2</span>
+            <span class="terminal-title empty" id="terminal-title-1-1">Terminal 2</span>
             <div class="header-actions">
-              <button class="action-btn pick-files-btn" id="pick-files-1" title="Insert file path">
+              <button class="action-btn pick-files-btn" id="pick-files-1-1" title="Insert file path">
                 <svg viewBox="0 0 16 16"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v.64c.57.265.94.876.856 1.546l-.64 5.124A2.5 2.5 0 0 1 12.733 15H3.266a2.5 2.5 0 0 1-2.481-2.19l-.64-5.124A1.5 1.5 0 0 1 1 6.14V3.5zM2 6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3H2.5a.5.5 0 0 0-.5.5V6z"/></svg>
               </button>
-              <button class="action-btn fullscreen-btn" id="fullscreen-1" title="Toggle fullscreen">
+              <button class="action-btn fullscreen-btn" id="fullscreen-1-1" title="Toggle fullscreen">
                 <svg class="expand-icon" viewBox="0 0 16 16"><path d="M3 3v4h1V4h3V3H3zm10 0h-4v1h3v3h1V3zM4 12v-3H3v4h4v-1H4zm8-3v3h-3v1h4V9h-1z"/></svg>
                 <svg class="collapse-icon" style="display:none" viewBox="0 0 16 16"><path d="M2 2h5v5H2V2zm1 1v3h3V3H3zm7-1h5v5h-5V2zm1 1v3h3V3h-3zM2 9h5v5H2V9zm1 1v3h3v-3H3zm7-1h5v5h-5V9zm1 1v3h3v-3h-3z"/></svg>
               </button>
-              <button class="action-btn kill-btn" id="kill-1" title="Kill terminal">
+              <button class="action-btn kill-btn" id="kill-1-1" title="Kill terminal">
                 <svg viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
               </button>
             </div>
-            <span class="status-indicator" id="status-1"></span>
+            <span class="status-indicator" id="status-1-1"></span>
           </div>
           <div class="terminal-wrapper">
-            <div id="terminal-1">
+            <div id="terminal-1-1">
               <div class="terminal-placeholder">
                 <span class="terminal-placeholder-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
                 <span class="terminal-placeholder-text">Select a project and click "Add Terminal"</span>
@@ -1256,26 +1256,26 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
             </div>
           </div>
         </div>
-        <div class="terminal-container hidden-slot" id="term-container-2">
+        <div class="terminal-container hidden-slot" id="term-container-1-2">
           <div class="terminal-header">
             <span class="terminal-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
-            <span class="terminal-title empty" id="terminal-title-2">Terminal 3</span>
+            <span class="terminal-title empty" id="terminal-title-1-2">Terminal 3</span>
             <div class="header-actions">
-              <button class="action-btn pick-files-btn" id="pick-files-2" title="Insert file path">
+              <button class="action-btn pick-files-btn" id="pick-files-1-2" title="Insert file path">
                 <svg viewBox="0 0 16 16"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v.64c.57.265.94.876.856 1.546l-.64 5.124A2.5 2.5 0 0 1 12.733 15H3.266a2.5 2.5 0 0 1-2.481-2.19l-.64-5.124A1.5 1.5 0 0 1 1 6.14V3.5zM2 6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3H2.5a.5.5 0 0 0-.5.5V6z"/></svg>
               </button>
-              <button class="action-btn fullscreen-btn" id="fullscreen-2" title="Toggle fullscreen">
+              <button class="action-btn fullscreen-btn" id="fullscreen-1-2" title="Toggle fullscreen">
                 <svg class="expand-icon" viewBox="0 0 16 16"><path d="M3 3v4h1V4h3V3H3zm10 0h-4v1h3v3h1V3zM4 12v-3H3v4h4v-1H4zm8-3v3h-3v1h4V9h-1z"/></svg>
                 <svg class="collapse-icon" style="display:none" viewBox="0 0 16 16"><path d="M2 2h5v5H2V2zm1 1v3h3V3H3zm7-1h5v5h-5V2zm1 1v3h3V3h-3zM2 9h5v5H2V9zm1 1v3h3v-3H3zm7-1h5v5h-5V9zm1 1v3h3v-3h-3z"/></svg>
               </button>
-              <button class="action-btn kill-btn" id="kill-2" title="Kill terminal">
+              <button class="action-btn kill-btn" id="kill-1-2" title="Kill terminal">
                 <svg viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
               </button>
             </div>
-            <span class="status-indicator" id="status-2"></span>
+            <span class="status-indicator" id="status-1-2"></span>
           </div>
           <div class="terminal-wrapper">
-            <div id="terminal-2">
+            <div id="terminal-1-2">
               <div class="terminal-placeholder">
                 <span class="terminal-placeholder-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
                 <span class="terminal-placeholder-text">Select a project and click "Add Terminal"</span>
@@ -1283,26 +1283,26 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
             </div>
           </div>
         </div>
-        <div class="terminal-container hidden-slot" id="term-container-3">
+        <div class="terminal-container hidden-slot" id="term-container-1-3">
           <div class="terminal-header">
             <span class="terminal-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
-            <span class="terminal-title empty" id="terminal-title-3">Terminal 4</span>
+            <span class="terminal-title empty" id="terminal-title-1-3">Terminal 4</span>
             <div class="header-actions">
-              <button class="action-btn pick-files-btn" id="pick-files-3" title="Insert file path">
+              <button class="action-btn pick-files-btn" id="pick-files-1-3" title="Insert file path">
                 <svg viewBox="0 0 16 16"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v.64c.57.265.94.876.856 1.546l-.64 5.124A2.5 2.5 0 0 1 12.733 15H3.266a2.5 2.5 0 0 1-2.481-2.19l-.64-5.124A1.5 1.5 0 0 1 1 6.14V3.5zM2 6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3H2.5a.5.5 0 0 0-.5.5V6z"/></svg>
               </button>
-              <button class="action-btn fullscreen-btn" id="fullscreen-3" title="Toggle fullscreen">
+              <button class="action-btn fullscreen-btn" id="fullscreen-1-3" title="Toggle fullscreen">
                 <svg class="expand-icon" viewBox="0 0 16 16"><path d="M3 3v4h1V4h3V3H3zm10 0h-4v1h3v3h1V3zM4 12v-3H3v4h4v-1H4zm8-3v3h-3v1h4V9h-1z"/></svg>
                 <svg class="collapse-icon" style="display:none" viewBox="0 0 16 16"><path d="M2 2h5v5H2V2zm1 1v3h3V3H3zm7-1h5v5h-5V2zm1 1v3h3V3h-3zM2 9h5v5H2V9zm1 1v3h3v-3H3zm7-1h5v5h-5V9zm1 1v3h3v-3h-3z"/></svg>
               </button>
-              <button class="action-btn kill-btn" id="kill-3" title="Kill terminal">
+              <button class="action-btn kill-btn" id="kill-1-3" title="Kill terminal">
                 <svg viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
               </button>
             </div>
-            <span class="status-indicator" id="status-3"></span>
+            <span class="status-indicator" id="status-1-3"></span>
           </div>
           <div class="terminal-wrapper">
-            <div id="terminal-3">
+            <div id="terminal-1-3">
               <div class="terminal-placeholder">
                 <span class="terminal-placeholder-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
                 <span class="terminal-placeholder-text">Select a project and click "Add Terminal"</span>
@@ -1376,61 +1376,69 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
                                getVSCodeColor('--vscode-editor-font-family', 'Menlo, Monaco, "Courier New", monospace');
     const terminalFontSize = parseInt(getVSCodeColor('--vscode-terminal-font-size', '12')) || 12;
 
-    // terminalProjects is now per-tab in tabState
-
-    // Setup kill and fullscreen buttons for each terminal
-    for (let i = 0; i < 4; i++) {
-      const killBtn = document.getElementById('kill-' + i);
-      killBtn.addEventListener('click', () => {
-        vscode.postMessage({
-          command: 'kill',
-          terminalId: i
+    // Setup event listeners for initial tab (Tab 1) terminals
+    function setupTerminalEventListeners(tabId, terminalId) {
+      const killBtn = document.getElementById('kill-' + tabId + '-' + terminalId);
+      if (killBtn) {
+        killBtn.addEventListener('click', function() {
+          vscode.postMessage({
+            command: 'kill',
+            tabId: tabId,
+            terminalId: terminalId
+          });
         });
-      });
+      }
 
-      const fullscreenBtn = document.getElementById('fullscreen-' + i);
-      fullscreenBtn.addEventListener('click', () => {
-        toggleFullscreen(i);
-      });
-
-      const pickFilesBtn = document.getElementById('pick-files-' + i);
-      pickFilesBtn.addEventListener('click', () => {
-        vscode.postMessage({
-          command: 'pickFiles',
-          terminalId: i
+      const fullscreenBtn = document.getElementById('fullscreen-' + tabId + '-' + terminalId);
+      if (fullscreenBtn) {
+        fullscreenBtn.addEventListener('click', function() {
+          toggleFullscreen(terminalId);
         });
-      });
+      }
+
+      const pickFilesBtn = document.getElementById('pick-files-' + tabId + '-' + terminalId);
+      if (pickFilesBtn) {
+        pickFilesBtn.addEventListener('click', function() {
+          vscode.postMessage({
+            command: 'pickFiles',
+            tabId: tabId,
+            terminalId: terminalId
+          });
+        });
+      }
 
       // Drag and drop support for files
-      const termContainer = document.getElementById('term-container-' + i);
+      const termContainer = document.getElementById('term-container-' + tabId + '-' + terminalId);
+      if (!termContainer) return;
 
-      termContainer.addEventListener('dragenter', (e) => {
+      termContainer.addEventListener('dragenter', function(e) {
         e.preventDefault();
         e.stopPropagation();
         termContainer.classList.add('drag-over');
       });
 
-      termContainer.addEventListener('dragleave', (e) => {
+      termContainer.addEventListener('dragleave', function(e) {
         // Only remove if leaving the container entirely
         if (!termContainer.contains(e.relatedTarget)) {
           termContainer.classList.remove('drag-over');
         }
       });
 
-      termContainer.addEventListener('dragover', (e) => {
+      termContainer.addEventListener('dragover', function(e) {
         e.preventDefault();
         e.stopPropagation();
         e.dataTransfer.dropEffect = 'copy';
       });
 
-      termContainer.addEventListener('drop', (e) => {
+      termContainer.addEventListener('drop', function(e) {
         e.preventDefault();
         e.stopPropagation();
         termContainer.classList.remove('drag-over');
 
-        if (!terminalInitialized[i]) return;
+        var tab = getTab(tabId);
+        if (!tab || !tab.terminalInitialized[terminalId]) return;
 
-        let paths = [];
+        var paths = [];
 
         // Helper to extract path from URI
         function extractPath(uri) {
@@ -1439,7 +1447,7 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
           if (!uri || uri.startsWith('#')) return null;
 
           if (uri.startsWith('file://')) {
-            let path = decodeURIComponent(uri.slice(7));
+            var path = decodeURIComponent(uri.slice(7));
             // Windows: file:///C:/path -> C:/path
             if (path.length > 2 && path[0] === '/' && path[2] === ':') {
               path = path.slice(1);
@@ -1452,13 +1460,13 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         }
 
         // Collect all available data types
-        const types = Array.from(e.dataTransfer.types || []);
+        var types = Array.from(e.dataTransfer.types || []);
 
         // Try various data formats
-        const uriList = e.dataTransfer.getData('text/uri-list');
-        const text = e.dataTransfer.getData('text/plain');
-        const resourceUrls = e.dataTransfer.getData('resourceurls');
-        const codeFiles = e.dataTransfer.getData('codefiles');
+        var uriList = e.dataTransfer.getData('text/uri-list');
+        var text = e.dataTransfer.getData('text/plain');
+        var resourceUrls = e.dataTransfer.getData('resourceurls');
+        var codeFiles = e.dataTransfer.getData('codefiles');
 
         // DEBUG: Show what we received
         console.log('=== DROP DEBUG ===');
@@ -1468,12 +1476,12 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         console.log('resourceUrls:', resourceUrls);
         console.log('codeFiles:', codeFiles);
         console.log('files:', e.dataTransfer.files.length);
-        for (let fi = 0; fi < e.dataTransfer.files.length; fi++) {
-          const f = e.dataTransfer.files[fi];
+        for (var fi = 0; fi < e.dataTransfer.files.length; fi++) {
+          var f = e.dataTransfer.files[fi];
           console.log('file', fi, ':', f.name, f.path, f.type);
         }
         // Try all types
-        types.forEach(t => {
+        types.forEach(function(t) {
           console.log('getData(' + t + '):', e.dataTransfer.getData(t));
         });
         console.log('==================');
@@ -1481,9 +1489,9 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         // Try VS Code resource URLs first
         if (resourceUrls) {
           try {
-            const resources = JSON.parse(resourceUrls);
-            resources.forEach(r => {
-              const path = extractPath(r);
+            var resources = JSON.parse(resourceUrls);
+            resources.forEach(function(r) {
+              var path = extractPath(r);
               if (path) paths.push(path);
             });
           } catch (err) {}
@@ -1492,9 +1500,9 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         // Try codefiles
         if (paths.length === 0 && codeFiles) {
           try {
-            const files = JSON.parse(codeFiles);
-            files.forEach(f => {
-              const path = extractPath(f);
+            var files = JSON.parse(codeFiles);
+            files.forEach(function(f) {
+              var path = extractPath(f);
               if (path) paths.push(path);
             });
           } catch (err) {}
@@ -1502,47 +1510,54 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
 
         // Try URI list
         if (paths.length === 0 && uriList) {
-          uriList.split(/\\r?\\n/).forEach(uri => {
-            const path = extractPath(uri);
+          uriList.split(/\\r?\\n/).forEach(function(uri) {
+            var path = extractPath(uri);
             if (path) paths.push(path);
           });
         }
 
         // Try plain text (might contain paths)
         if (paths.length === 0 && text) {
-          text.split(/\\r?\\n/).forEach(line => {
-            const path = extractPath(line);
+          text.split(/\\r?\\n/).forEach(function(line) {
+            var path = extractPath(line);
             if (path) paths.push(path);
           });
         }
 
         // Try Files API
         if (paths.length === 0 && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-          for (let f = 0; f < e.dataTransfer.files.length; f++) {
-            const file = e.dataTransfer.files[f];
+          for (var fi2 = 0; fi2 < e.dataTransfer.files.length; fi2++) {
+            var file = e.dataTransfer.files[fi2];
             if (file.path) paths.push(file.path);
             else if (file.name) paths.push(file.name);
           }
         }
 
         if (paths.length > 0) {
-          const quotedPaths = paths.map(p => p.includes(' ') ? '"' + p + '"' : p);
+          var quotedPaths = paths.map(function(p) { return p.includes(' ') ? '"' + p + '"' : p; });
           vscode.postMessage({
             command: 'input',
-            terminalId: i,
+            tabId: tabId,
+            terminalId: terminalId,
             data: quotedPaths.join(' ')
           });
-          if (terminals[i]) terminals[i].focus();
+          if (tab.terminals[terminalId]) tab.terminals[terminalId].focus();
         } else {
           // Send all data to extension for resolution
           vscode.postMessage({
             command: 'resolveDrop',
-            terminalId: i,
-            data: { uriList, text, resourceUrls, codeFiles, types }
+            tabId: tabId,
+            terminalId: terminalId,
+            data: { uriList: uriList, text: text, resourceUrls: resourceUrls, codeFiles: codeFiles, types: types }
           });
-          if (terminals[i]) terminals[i].focus();
+          if (tab.terminals[terminalId]) tab.terminals[terminalId].focus();
         }
       });
+    }
+
+    // Setup initial tab terminals
+    for (var i = 0; i < 4; i++) {
+      setupTerminalEventListeners(1, i);
     }
 
     let currentFullscreen = -1;
@@ -1563,19 +1578,24 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       };
 
       // Create tab button
-      const tabBar = document.getElementById('tab-bar');
-      const addTabBtn = document.getElementById('add-tab-btn');
+      var tabBar = document.getElementById('tab-bar');
+      var addTabBtn = document.getElementById('add-tab-btn');
 
-      const tabBtn = document.createElement('button');
+      var tabBtn = document.createElement('button');
       tabBtn.className = 'tab-button';
       tabBtn.dataset.tabId = tabId;
       tabBtn.innerHTML = '<span class="tab-label">Tab ' + tabId + '</span><span class="tab-activity"></span><button class="tab-close" title="Close tab"><svg viewBox="0 0 16 16"><path d="M8 8.707l3.646 3.647.708-.707L8.707 8l3.647-3.646-.707-.708L8 7.293 4.354 3.646l-.707.708L7.293 8l-3.646 3.646.707.708L8 8.707z"/></svg></button>';
       tabBar.insertBefore(tabBtn, addTabBtn);
 
       // Create grid for this tab
-      const gridContainer = document.querySelector('.grid-container');
-      const newGrid = createGridForTab(tabId);
+      var gridContainer = document.querySelector('.grid-container');
+      var newGrid = createGridForTab(tabId);
       gridContainer.appendChild(newGrid);
+
+      // Setup terminal event listeners for new tab
+      for (var i = 0; i < 4; i++) {
+        setupTerminalEventListeners(tabId, i);
+      }
 
       // Attach event listeners
       attachTabButtonListeners(tabBtn);
@@ -1688,27 +1708,33 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     }
 
     function removeTerminalSlot(terminalId) {
-      const container = document.getElementById('term-container-' + terminalId);
-      container.classList.add('hidden-slot');
+      var tab = getActiveTab();
+      if (!tab) return;
+
+      var container = document.getElementById('term-container-' + activeTabId + '-' + terminalId);
+      if (container) container.classList.add('hidden-slot');
 
       // Recalculate visible terminal count
-      visibleTerminalCount = 0;
-      for (let i = 0; i < 4; i++) {
-        const c = document.getElementById('term-container-' + i);
-        if (!c.classList.contains('hidden-slot')) {
-          visibleTerminalCount++;
+      tab.visibleTerminalCount = 0;
+      for (var i = 0; i < 4; i++) {
+        var c = document.getElementById('term-container-' + activeTabId + '-' + i);
+        if (c && !c.classList.contains('hidden-slot')) {
+          tab.visibleTerminalCount++;
         }
       }
 
       // Ensure at least one terminal slot is visible (show placeholder)
-      if (visibleTerminalCount === 0) {
-        document.getElementById('term-container-0').classList.remove('hidden-slot');
-        visibleTerminalCount = 1;
-        // Restore placeholder content
-        const termEl = document.getElementById('terminal-0');
-        if (termEl && !termEl.querySelector('.terminal-placeholder')) {
-          termEl.innerHTML = '<div class="terminal-placeholder"><span class="terminal-placeholder-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span><span class="terminal-placeholder-text">Select a project and click "Add Terminal"</span></div>';
-          terminalInitialized[0] = false;
+      if (tab.visibleTerminalCount === 0) {
+        var firstContainer = document.getElementById('term-container-' + activeTabId + '-0');
+        if (firstContainer) {
+          firstContainer.classList.remove('hidden-slot');
+          tab.visibleTerminalCount = 1;
+          // Restore placeholder content
+          var termEl = document.getElementById('terminal-' + activeTabId + '-0');
+          if (termEl && !termEl.querySelector('.terminal-placeholder')) {
+            termEl.innerHTML = '<div class="terminal-placeholder"><span class="terminal-placeholder-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span><span class="terminal-placeholder-text">Select a project and click "Add Terminal"</span></div>';
+            tab.terminalInitialized[0] = false;
+          }
         }
       }
 
@@ -1716,17 +1742,19 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     }
 
     function hasAvailableSlot() {
+      var tab = getActiveTab();
+      if (!tab) return false;
       // Check for visible empty slot (no active project)
-      for (let i = 0; i < 4; i++) {
-        const container = document.getElementById('term-container-' + i);
-        if (!container.classList.contains('hidden-slot') && !terminalProjects[i]) {
+      for (var i = 0; i < 4; i++) {
+        var container = document.getElementById('term-container-' + activeTabId + '-' + i);
+        if (container && !container.classList.contains('hidden-slot') && !tab.terminalProjects[i]) {
           return true;
         }
       }
       // Check for hidden slot
-      for (let i = 0; i < 4; i++) {
-        const container = document.getElementById('term-container-' + i);
-        if (container.classList.contains('hidden-slot')) {
+      for (var i = 0; i < 4; i++) {
+        var container = document.getElementById('term-container-' + activeTabId + '-' + i);
+        if (container && container.classList.contains('hidden-slot')) {
           return true;
         }
       }
@@ -1734,23 +1762,30 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     }
 
     function startTerminalWithProject(terminalId, projectPath, projectName, resume) {
+      var tab = getActiveTab();
+      if (!tab) return;
+
       // Initialize the terminal UI
       initializeTerminal(terminalId);
 
       // Update terminal title
-      const titleEl = document.getElementById('terminal-title-' + terminalId);
-      titleEl.textContent = projectName;
-      titleEl.classList.remove('empty');
+      var titleEl = document.getElementById('terminal-title-' + activeTabId + '-' + terminalId);
+      if (titleEl) {
+        titleEl.textContent = projectName;
+        titleEl.classList.remove('empty');
+      }
 
       // Store project info
-      terminalProjects[terminalId] = projectPath;
+      tab.terminalProjects[terminalId] = projectPath;
 
       // Update status indicator
-      document.getElementById('status-' + terminalId).classList.add('active');
+      var statusEl = document.getElementById('status-' + activeTabId + '-' + terminalId);
+      if (statusEl) statusEl.classList.add('active');
 
       // Send message to extension to start the terminal
       vscode.postMessage({
         command: 'selectProject',
+        tabId: activeTabId,
         terminalId: terminalId,
         projectPath: projectPath,
         resume: resume
@@ -1768,10 +1803,13 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     document.getElementById('global-project-select').addEventListener('change', updateAddButtonState);
 
     function addTerminal() {
-      const globalSelect = document.getElementById('global-project-select');
-      const projectPath = globalSelect.value;
-      const projectName = globalSelect.options[globalSelect.selectedIndex]?.text || '';
-      const resume = document.getElementById('global-resume').checked;
+      var tab = getActiveTab();
+      if (!tab) return;
+
+      var globalSelect = document.getElementById('global-project-select');
+      var projectPath = globalSelect.value;
+      var projectName = globalSelect.options[globalSelect.selectedIndex] ? globalSelect.options[globalSelect.selectedIndex].text : '';
+      var resume = document.getElementById('global-resume').checked;
 
       // Require a project to be selected
       if (!projectPath) {
@@ -1779,12 +1817,12 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       }
 
       // Find an available slot
-      let targetTerminalId = -1;
+      var targetTerminalId = -1;
 
       // First, check for a visible empty slot (no active project)
-      for (let i = 0; i < 4; i++) {
-        const container = document.getElementById('term-container-' + i);
-        if (!container.classList.contains('hidden-slot') && !terminalProjects[i]) {
+      for (var i = 0; i < 4; i++) {
+        var container = document.getElementById('term-container-' + activeTabId + '-' + i);
+        if (container && !container.classList.contains('hidden-slot') && !tab.terminalProjects[i]) {
           targetTerminalId = i;
           break;
         }
@@ -1792,26 +1830,27 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
 
       // If no visible empty slot, find a hidden slot and show it
       if (targetTerminalId === -1) {
-        for (let i = 0; i < 4; i++) {
-          const container = document.getElementById('term-container-' + i);
-          if (container.classList.contains('hidden-slot')) {
+        for (var i = 0; i < 4; i++) {
+          var container = document.getElementById('term-container-' + activeTabId + '-' + i);
+          if (container && container.classList.contains('hidden-slot')) {
             targetTerminalId = i;
             container.classList.remove('hidden-slot');
-            visibleTerminalCount++;
+            tab.visibleTerminalCount++;
             updateGridLayout();
             break;
           }
         }
       }
 
-      // No available slot
+      // No available slot - create new tab
       if (targetTerminalId === -1) {
+        vscode.postMessage({ command: 'createTab' });
         return;
       }
 
       // Delay terminal start to allow layout to settle
-      const tid = targetTerminalId;
-      setTimeout(() => {
+      var tid = targetTerminalId;
+      setTimeout(function() {
         startTerminalWithProject(tid, projectPath, projectName, resume);
       }, 100);
     }
@@ -1820,11 +1859,13 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     document.getElementById('add-terminal-btn').addEventListener('click', addTerminal);
 
     function toggleFullscreen(terminalId) {
-      const grid = document.querySelector('.grid');
-      const container = document.getElementById('term-container-' + terminalId);
-      const btn = document.getElementById('fullscreen-' + terminalId);
-      const expandIcon = btn.querySelector('.expand-icon');
-      const collapseIcon = btn.querySelector('.collapse-icon');
+      var grid = document.querySelector('.grid[data-tab-id="' + activeTabId + '"]');
+      if (!grid) return;
+      var container = document.getElementById('term-container-' + activeTabId + '-' + terminalId);
+      var btn = document.getElementById('fullscreen-' + activeTabId + '-' + terminalId);
+      if (!container || !btn) return;
+      var expandIcon = btn.querySelector('.expand-icon');
+      var collapseIcon = btn.querySelector('.collapse-icon');
 
       if (currentFullscreen === terminalId) {
         // Exit fullscreen
@@ -1836,11 +1877,13 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       } else {
         // Enter fullscreen (or switch to different terminal)
         if (currentFullscreen >= 0) {
-          const prevContainer = document.getElementById('term-container-' + currentFullscreen);
-          const prevBtn = document.getElementById('fullscreen-' + currentFullscreen);
-          prevContainer.classList.remove('fullscreen');
-          prevBtn.querySelector('.expand-icon').style.display = '';
-          prevBtn.querySelector('.collapse-icon').style.display = 'none';
+          var prevContainer = document.getElementById('term-container-' + activeTabId + '-' + currentFullscreen);
+          var prevBtn = document.getElementById('fullscreen-' + activeTabId + '-' + currentFullscreen);
+          if (prevContainer) prevContainer.classList.remove('fullscreen');
+          if (prevBtn) {
+            prevBtn.querySelector('.expand-icon').style.display = '';
+            prevBtn.querySelector('.collapse-icon').style.display = 'none';
+          }
         }
         grid.classList.add('has-fullscreen');
         container.classList.add('fullscreen');
@@ -1854,15 +1897,21 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     }
 
     function initializeTerminal(i) {
-      if (terminalInitialized[i]) {
+      var tab = getActiveTab();
+      if (!tab) return;
+
+      if (tab.terminalInitialized[i]) {
         return; // Already initialized
       }
 
-      const container = document.getElementById('terminal-' + i);
+      var terminalId = i;
+      var currentTabId = activeTabId;
+      var container = document.getElementById('terminal-' + currentTabId + '-' + i);
+      if (!container) return;
       container.innerHTML = ''; // Clear placeholder
 
-      const term = new Terminal({
-        theme,
+      var term = new Terminal({
+        theme: theme,
         fontSize: terminalFontSize,
         fontFamily: terminalFontFamily,
         cursorBlink: true,
@@ -1873,29 +1922,29 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         lineHeight: 1.2
       });
 
-      const fitAddon = new FitAddon.FitAddon();
+      var fitAddon = new FitAddon.FitAddon();
       term.loadAddon(fitAddon);
 
       term.open(container);
 
       // Register file link provider for clickable file paths
       term.registerLinkProvider({
-        provideLinks: (bufferLineNumber, callback) => {
-          const line = term.buffer.active.getLine(bufferLineNumber);
+        provideLinks: function(bufferLineNumber, callback) {
+          var line = term.buffer.active.getLine(bufferLineNumber);
           if (!line) {
             callback(undefined);
             return;
           }
-          const lineText = line.translateToString(true);
-          const links = [];
+          var lineText = line.translateToString(true);
+          var links = [];
 
           // Simple file path pattern: matches paths with extensions and optional :line:col
           // Examples: src/file.ts:10:5, ./foo.ts, /abs/path.js:42, file.tsx:10
-          const fileRegex = /([.]{0,2}\\/)?([\\w.-]+\\/)*[\\w.-]+\\.[a-zA-Z]{1,10}(:\\d+)?(:\\d+)?/g;
+          var fileRegex = /([.]{0,2}\\/)?([\\w.-]+\\/)*[\\w.-]+\\.[a-zA-Z]{1,10}(:\\d+)?(:\\d+)?/g;
 
-          let match;
+          var match;
           while ((match = fileRegex.exec(lineText)) !== null) {
-            const fullMatch = match[0];
+            var fullMatch = match[0];
 
             // Skip URLs
             if (lineText.substring(Math.max(0, match.index - 10), match.index).includes('://')) continue;
@@ -1904,33 +1953,36 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
             if (fullMatch.length < 3) continue;
 
             // Parse line:col from the match
-            const parts = fullMatch.split(':');
-            const filePath = parts[0];
-            const lineNum = parts[1] ? parseInt(parts[1], 10) : undefined;
-            const colNum = parts[2] ? parseInt(parts[2], 10) : undefined;
+            var parts = fullMatch.split(':');
+            var filePath = parts[0];
+            var lineNum = parts[1] ? parseInt(parts[1], 10) : undefined;
+            var colNum = parts[2] ? parseInt(parts[2], 10) : undefined;
 
             // Skip if no extension
             if (!/\\.[a-zA-Z0-9]+$/.test(filePath)) continue;
 
-            const matchStart = match.index;
-            const matchEnd = matchStart + fullMatch.length;
+            var matchStart = match.index;
+            var matchEnd = matchStart + fullMatch.length;
 
-            links.push({
-              range: {
-                start: { x: matchStart + 1, y: bufferLineNumber + 1 },
-                end: { x: matchEnd + 1, y: bufferLineNumber + 1 }
-              },
-              text: fullMatch,
-              activate: (event, text) => {
-                vscode.postMessage({
-                  command: 'openFile',
-                  filePath: filePath,
-                  line: lineNum,
-                  column: colNum,
-                  terminalId: i
-                });
-              }
-            });
+            (function(fp, ln, cn) {
+              links.push({
+                range: {
+                  start: { x: matchStart + 1, y: bufferLineNumber + 1 },
+                  end: { x: matchEnd + 1, y: bufferLineNumber + 1 }
+                },
+                text: fullMatch,
+                activate: function(event, text) {
+                  vscode.postMessage({
+                    command: 'openFile',
+                    filePath: fp,
+                    line: ln,
+                    column: cn,
+                    tabId: currentTabId,
+                    terminalId: terminalId
+                  });
+                }
+              });
+            })(filePath, lineNum, colNum);
           }
 
           callback(links.length > 0 ? links : undefined);
@@ -1939,68 +1991,67 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
 
       // Register URL link provider for http/https links
       term.registerLinkProvider({
-        provideLinks: (bufferLineNumber, callback) => {
-          const line = term.buffer.active.getLine(bufferLineNumber);
+        provideLinks: function(bufferLineNumber, callback) {
+          var line = term.buffer.active.getLine(bufferLineNumber);
           if (!line) {
             callback(undefined);
             return;
           }
-          const lineText = line.translateToString(true);
-          const links = [];
+          var lineText = line.translateToString(true);
+          var links = [];
 
           // Match URLs
-          const urlRegex = /https?:\\/\\/[^\\s<>"{}|\\\\^\\[\\]]+/g;
+          var urlRegex = /https?:\\/\\/[^\\s<>"{}|\\\\^\\[\\]]+/g;
 
-          let match;
+          var match;
           while ((match = urlRegex.exec(lineText)) !== null) {
-            const url = match[0].replace(/[.,;:!?)]+$/, ''); // Trim trailing punctuation
-            const matchStart = match.index;
-            const matchEnd = matchStart + url.length;
+            var url = match[0].replace(/[.,;:!?)]+$/, ''); // Trim trailing punctuation
+            var matchStart = match.index;
+            var matchEnd = matchStart + url.length;
 
-            links.push({
-              range: {
-                start: { x: matchStart + 1, y: bufferLineNumber + 1 },
-                end: { x: matchEnd + 1, y: bufferLineNumber + 1 }
-              },
-              text: url,
-              activate: (event, text) => {
-                vscode.postMessage({
-                  command: 'openUrl',
-                  url: url
-                });
-              }
-            });
+            (function(u) {
+              links.push({
+                range: {
+                  start: { x: matchStart + 1, y: bufferLineNumber + 1 },
+                  end: { x: matchEnd + 1, y: bufferLineNumber + 1 }
+                },
+                text: url,
+                activate: function(event, text) {
+                  vscode.postMessage({
+                    command: 'openUrl',
+                    url: u
+                  });
+                }
+              });
+            })(url);
           }
 
           callback(links.length > 0 ? links : undefined);
         }
       });
 
-      // Store detected links for click handling
-      let currentLinks = [];
-
       // Helper to detect links at a position
       function detectLinksAtPosition(x, y) {
-        const line = term.buffer.active.getLine(y);
+        var line = term.buffer.active.getLine(y);
         if (!line) return [];
 
-        const lineText = line.translateToString(true);
-        const links = [];
+        var lineText = line.translateToString(true);
+        var links = [];
 
         // File paths
-        const fileRegex = /([.]{0,2}\\/)?([\\w.-]+\\/)*[\\w.-]+\\.[a-zA-Z]{1,10}(:\\d+)?(:\\d+)?/g;
-        let match;
+        var fileRegex = /([.]{0,2}\\/)?([\\w.-]+\\/)*[\\w.-]+\\.[a-zA-Z]{1,10}(:\\d+)?(:\\d+)?/g;
+        var match;
         while ((match = fileRegex.exec(lineText)) !== null) {
-          const fullMatch = match[0];
+          var fullMatch = match[0];
           if (fullMatch.length < 3) continue;
           if (lineText.substring(Math.max(0, match.index - 10), match.index).includes('://')) continue;
 
-          const parts = fullMatch.split(':');
-          const filePath = parts[0];
+          var parts = fullMatch.split(':');
+          var filePath = parts[0];
           if (!/\\.[a-zA-Z0-9]+$/.test(filePath)) continue;
 
-          const startX = match.index;
-          const endX = startX + fullMatch.length;
+          var startX = match.index;
+          var endX = startX + fullMatch.length;
 
           if (x >= startX && x < endX) {
             links.push({
@@ -2013,11 +2064,11 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         }
 
         // URLs
-        const urlRegex = /https?:\\/\\/[^\\s<>"{}|\\\\^\\[\\]]+/g;
+        var urlRegex = /https?:\\/\\/[^\\s<>"{}|\\\\^\\[\\]]+/g;
         while ((match = urlRegex.exec(lineText)) !== null) {
-          const url = match[0].replace(/[.,;:!?)]+$/, '');
-          const startX = match.index;
-          const endX = startX + url.length;
+          var url = match[0].replace(/[.,;:!?)]+$/, '');
+          var startX = match.index;
+          var endX = startX + url.length;
 
           if (x >= startX && x < endX) {
             links.push({ type: 'url', url: url });
@@ -2041,47 +2092,47 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
 
       // Convert mouse position to terminal coordinates
       function getTerminalPosition(e, element) {
-        const rect = element.getBoundingClientRect();
-        const dims = getCellDimensions();
+        var rect = element.getBoundingClientRect();
+        var dims = getCellDimensions();
         if (!dims) return null;
 
-        const x = Math.floor((e.clientX - rect.left) / dims.width);
-        const y = Math.floor((e.clientY - rect.top) / dims.height);
-        const bufferY = y + term.buffer.active.viewportY;
+        var x = Math.floor((e.clientX - rect.left) / dims.width);
+        var y = Math.floor((e.clientY - rect.top) / dims.height);
+        var bufferY = y + term.buffer.active.viewportY;
 
-        return { x, y, bufferY };
+        return { x: x, y: y, bufferY: bufferY };
       }
 
       // Wait for xterm to fully render, then attach handlers to the screen element
-      setTimeout(() => {
-        const xtermScreen = container.querySelector('.xterm-screen');
+      setTimeout(function() {
+        var xtermScreen = container.querySelector('.xterm-screen');
         if (!xtermScreen) return;
 
         // Hover handler - change cursor when over links
-        xtermScreen.addEventListener('mousemove', (e) => {
-          const pos = getTerminalPosition(e, xtermScreen);
+        xtermScreen.addEventListener('mousemove', function(e) {
+          var pos = getTerminalPosition(e, xtermScreen);
           if (!pos) return;
 
-          const links = detectLinksAtPosition(pos.x, pos.bufferY);
+          var links = detectLinksAtPosition(pos.x, pos.bufferY);
           xtermScreen.style.cursor = links.length > 0 ? 'pointer' : 'text';
         });
 
-        xtermScreen.addEventListener('mouseleave', () => {
+        xtermScreen.addEventListener('mouseleave', function() {
           xtermScreen.style.cursor = 'text';
         });
 
         // Click handler for links
-        xtermScreen.addEventListener('mousedown', (e) => {
+        xtermScreen.addEventListener('mousedown', function(e) {
           // Only handle left clicks
           if (e.button !== 0) return;
 
-          const pos = getTerminalPosition(e, xtermScreen);
+          var pos = getTerminalPosition(e, xtermScreen);
           if (!pos) return;
 
-          const links = detectLinksAtPosition(pos.x, pos.bufferY);
+          var links = detectLinksAtPosition(pos.x, pos.bufferY);
 
           if (links.length > 0) {
-            const link = links[0];
+            var link = links[0];
 
             // Prevent xterm from starting text selection
             e.preventDefault();
@@ -2093,7 +2144,8 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
                 filePath: link.path,
                 line: link.line,
                 column: link.column,
-                terminalId: i
+                tabId: currentTabId,
+                terminalId: terminalId
               });
             } else if (link.type === 'url') {
               vscode.postMessage({
@@ -2105,37 +2157,40 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         });
       }, 100);
 
-      terminals[i] = term;
-      fitAddons[i] = fitAddon;
-      terminalInitialized[i] = true;
+      tab.terminals[i] = term;
+      tab.fitAddons[i] = fitAddon;
+      tab.terminalInitialized[i] = true;
 
       // Send input to extension
-      term.onData((data) => {
+      term.onData(function(data) {
         vscode.postMessage({
           command: 'input',
-          terminalId: i,
+          tabId: currentTabId,
+          terminalId: terminalId,
           data: data
         });
       });
 
       // Send resize to extension
-      term.onResize(({ cols, rows }) => {
+      term.onResize(function(size) {
         vscode.postMessage({
           command: 'resize',
-          terminalId: i,
-          cols,
-          rows
+          tabId: currentTabId,
+          terminalId: terminalId,
+          cols: size.cols,
+          rows: size.rows
         });
       });
 
       // Fit after initialization - multiple attempts to handle layout timing
-      const doFit = () => {
+      var doFit = function() {
         fitAddon.fit();
-        const dims = fitAddon.proposeDimensions();
+        var dims = fitAddon.proposeDimensions();
         if (dims) {
           vscode.postMessage({
             command: 'resize',
-            terminalId: i,
+            tabId: currentTabId,
+            terminalId: terminalId,
             cols: dims.cols,
             rows: dims.rows
           });
@@ -2143,7 +2198,7 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       };
 
       // Initial fit after short delay
-      setTimeout(() => {
+      setTimeout(function() {
         doFit();
         term.focus();
       }, 50);
@@ -2157,14 +2212,18 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
 
     // Fit all initialized terminals
     function fitAll() {
-      fitAddons.forEach((addon, i) => {
-        if (addon && terminalInitialized[i]) {
+      var tab = getActiveTab();
+      if (!tab) return;
+
+      tab.fitAddons.forEach(function(addon, i) {
+        if (addon && tab.terminalInitialized[i]) {
           try {
             addon.fit();
-            const dims = addon.proposeDimensions();
+            var dims = addon.proposeDimensions();
             if (dims) {
               vscode.postMessage({
                 command: 'resize',
+                tabId: activeTabId,
                 terminalId: i,
                 cols: dims.cols,
                 rows: dims.rows
@@ -2195,8 +2254,11 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     let receivedConfig = null;
 
     // Handle messages from extension
-    window.addEventListener('message', (event) => {
-      const message = event.data;
+    window.addEventListener('message', function(event) {
+      var message = event.data;
+      var msgTabId = message.tabId || activeTabId;
+      var msgTab = getTab(msgTabId);
+
       switch (message.command) {
         case 'projects':
           updateProjectSelectors(message.projects);
@@ -2206,104 +2268,138 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
           applyTerminalConfig(message.config);
           break;
         case 'output':
-          if (terminals[message.terminalId]) {
-            const term = terminals[message.terminalId];
+          if (msgTab && msgTab.terminals[message.terminalId]) {
+            var outTerm = msgTab.terminals[message.terminalId];
             // Check if user is at bottom before writing
-            const isAtBottom = term.buffer.active.viewportY >= term.buffer.active.baseY;
-            term.write(message.data);
+            var isAtBottom = outTerm.buffer.active.viewportY >= outTerm.buffer.active.baseY;
+            outTerm.write(message.data);
             // Only auto-scroll if user was already at bottom
             if (isAtBottom) {
-              term.scrollToBottom();
+              outTerm.scrollToBottom();
             }
+          }
+          // Mark tab as having activity if not active
+          if (msgTabId !== activeTabId) {
+            var tabBtn = document.querySelector('.tab-button[data-tab-id="' + msgTabId + '"]');
+            if (tabBtn) tabBtn.classList.add('has-activity');
           }
           break;
         case 'clear':
-          if (terminals[message.terminalId]) {
-            terminals[message.terminalId].clear();
-            terminals[message.terminalId].reset();
+          if (msgTab && msgTab.terminals[message.terminalId]) {
+            msgTab.terminals[message.terminalId].clear();
+            msgTab.terminals[message.terminalId].reset();
           }
           break;
         case 'error':
-          if (terminals[message.terminalId]) {
-            terminals[message.terminalId].write('\\x1b[31m' + message.message + '\\x1b[0m\\r\\n');
+          if (msgTab && msgTab.terminals[message.terminalId]) {
+            msgTab.terminals[message.terminalId].write('\\x1b[31m' + message.message + '\\x1b[0m\\r\\n');
           }
           break;
         case 'killed':
-          document.getElementById('status-' + message.terminalId).classList.remove('active', 'busy');
+          var killedTabId = message.tabId || activeTabId;
+          var killedTab = getTab(killedTabId);
+          var killedStatusEl = document.getElementById('status-' + killedTabId + '-' + message.terminalId);
+          if (killedStatusEl) killedStatusEl.classList.remove('active', 'busy');
           // Reset terminal title
-          const killedTitle = document.getElementById('terminal-title-' + message.terminalId);
-          killedTitle.textContent = 'Terminal ' + (message.terminalId + 1);
-          killedTitle.classList.add('empty');
+          var killedTitle = document.getElementById('terminal-title-' + killedTabId + '-' + message.terminalId);
+          if (killedTitle) {
+            killedTitle.textContent = 'Terminal ' + (message.terminalId + 1);
+            killedTitle.classList.add('empty');
+          }
           // Clear project tracking
-          terminalProjects[message.terminalId] = '';
+          if (killedTab) killedTab.terminalProjects[message.terminalId] = '';
 
-          // Exit fullscreen if this terminal was fullscreened
-          if (currentFullscreen === message.terminalId) {
+          // Exit fullscreen if this terminal was fullscreened (only for active tab)
+          if (killedTabId === activeTabId && currentFullscreen === message.terminalId) {
             toggleFullscreen(message.terminalId);
           }
 
-          // Hide this terminal and let remaining terminals expand
-          removeTerminalSlot(message.terminalId);
+          // Hide this terminal and let remaining terminals expand (only for active tab)
+          if (killedTabId === activeTabId) {
+            removeTerminalSlot(message.terminalId);
+          }
           break;
         case 'status':
-          const statusEl = document.getElementById('status-' + message.terminalId);
-          if (message.status === 'busy') {
-            statusEl.classList.remove('active');
-            statusEl.classList.add('busy');
-          } else {
-            statusEl.classList.remove('busy');
-            statusEl.classList.add('active');
+          var statusTabId = message.tabId || activeTabId;
+          var statusEl = document.getElementById('status-' + statusTabId + '-' + message.terminalId);
+          if (statusEl) {
+            if (message.status === 'busy') {
+              statusEl.classList.remove('active');
+              statusEl.classList.add('busy');
+            } else {
+              statusEl.classList.remove('busy');
+              statusEl.classList.add('active');
+            }
+          }
+          // Mark tab as having activity if not active
+          if (statusTabId !== activeTabId && message.status === 'busy') {
+            var tabBtn = document.querySelector('.tab-button[data-tab-id="' + statusTabId + '"]');
+            if (tabBtn) tabBtn.classList.add('has-activity');
           }
           break;
         case 'dropResolved':
           // Resolved file paths from extension, input them into terminal
-          if (message.paths && terminalInitialized[message.terminalId]) {
+          var dropTabId = message.tabId || activeTabId;
+          var dropTab = getTab(dropTabId);
+          if (message.paths && dropTab && dropTab.terminalInitialized[message.terminalId]) {
             vscode.postMessage({
               command: 'input',
+              tabId: dropTabId,
               terminalId: message.terminalId,
               data: message.paths
             });
-            if (terminals[message.terminalId]) {
-              terminals[message.terminalId].focus();
+            if (dropTab.terminals[message.terminalId]) {
+              dropTab.terminals[message.terminalId].focus();
             }
           }
           break;
         case 'refresh':
           // Exit fullscreen if active
           if (currentFullscreen >= 0) {
-            const grid = document.querySelector('.grid');
-            const prevContainer = document.getElementById('term-container-' + currentFullscreen);
-            const prevBtn = document.getElementById('fullscreen-' + currentFullscreen);
-            grid.classList.remove('has-fullscreen');
-            prevContainer.classList.remove('fullscreen');
-            prevBtn.querySelector('.expand-icon').style.display = '';
-            prevBtn.querySelector('.collapse-icon').style.display = 'none';
+            var grid = document.querySelector('.grid[data-tab-id="' + activeTabId + '"]');
+            var prevContainer = document.getElementById('term-container-' + activeTabId + '-' + currentFullscreen);
+            var prevBtn = document.getElementById('fullscreen-' + activeTabId + '-' + currentFullscreen);
+            if (grid) grid.classList.remove('has-fullscreen');
+            if (prevContainer) prevContainer.classList.remove('fullscreen');
+            if (prevBtn) {
+              prevBtn.querySelector('.expand-icon').style.display = '';
+              prevBtn.querySelector('.collapse-icon').style.display = 'none';
+            }
             currentFullscreen = -1;
           }
-          // Reset all terminals
-          for (let i = 0; i < 4; i++) {
-            if (terminals[i]) {
-              terminals[i].clear();
-              terminals[i].reset();
+          // Reset all terminals in active tab
+          var refreshTab = getActiveTab();
+          if (refreshTab) {
+            for (var i = 0; i < 4; i++) {
+              if (refreshTab.terminals[i]) {
+                refreshTab.terminals[i].clear();
+                refreshTab.terminals[i].reset();
+              }
+              refreshTab.terminalInitialized[i] = false;
+              refreshTab.terminalProjects[i] = '';
+              var termEl = document.getElementById('terminal-' + activeTabId + '-' + i);
+              if (termEl) {
+                termEl.innerHTML = '<div class="terminal-placeholder"><span class="terminal-placeholder-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span><span class="terminal-placeholder-text">Select a project and click "Add Terminal"</span></div>';
+              }
+              // Reset terminal title
+              var titleEl = document.getElementById('terminal-title-' + activeTabId + '-' + i);
+              if (titleEl) {
+                titleEl.textContent = 'Terminal ' + (i + 1);
+                titleEl.classList.add('empty');
+              }
+              var statusEl = document.getElementById('status-' + activeTabId + '-' + i);
+              if (statusEl) statusEl.classList.remove('active', 'busy');
+              // Hide terminals 1-3
+              if (i > 0) {
+                var termContainer = document.getElementById('term-container-' + activeTabId + '-' + i);
+                if (termContainer) termContainer.classList.add('hidden-slot');
+              }
             }
-            terminalInitialized[i] = false;
-            terminalProjects[i] = '';
-            document.getElementById('terminal-' + i).innerHTML = '<div class="terminal-placeholder"><span class="terminal-placeholder-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span><span class="terminal-placeholder-text">Select a project and click "Add Terminal"</span></div>';
-            // Reset terminal title
-            const titleEl = document.getElementById('terminal-title-' + i);
-            titleEl.textContent = 'Terminal ' + (i + 1);
-            titleEl.classList.add('empty');
-            document.getElementById('status-' + i).classList.remove('active', 'busy');
-            // Hide terminals 1-3
-            if (i > 0) {
-              document.getElementById('term-container-' + i).classList.add('hidden-slot');
-            }
+            refreshTab.visibleTerminalCount = 1;
           }
           // Reset global controls
           document.getElementById('global-project-select').value = '';
           document.getElementById('global-resume').checked = false;
-          // Reset to single terminal layout
-          if (getActiveTab()) getActiveTab().visibleTerminalCount = 1;
           updateGridLayout();
           break;
         case 'tabCreated':
@@ -2378,23 +2474,28 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       });
       document.body.style.background = bgColor;
 
-      // Update existing terminals with new theme
-      terminals.forEach((term, i) => {
-        if (term && terminalInitialized[i]) {
-          term.options.theme = newTheme;
-          if (config.fontFamily) {
-            term.options.fontFamily = config.fontFamily;
-          }
-          if (config.fontSize) {
-            term.options.fontSize = config.fontSize;
-          }
-          if (config.lineHeight) {
-            term.options.lineHeight = config.lineHeight;
-          }
-          if (config.cursorStyle) {
-            term.options.cursorStyle = config.cursorStyle;
-          }
-          term.options.cursorBlink = config.cursorBlink !== false;
+      // Update existing terminals with new theme (all tabs)
+      Object.keys(tabState).forEach(function(tabIdStr) {
+        var tabData = tabState[tabIdStr];
+        if (tabData && tabData.terminals) {
+          tabData.terminals.forEach(function(term, i) {
+            if (term && tabData.terminalInitialized[i]) {
+              term.options.theme = newTheme;
+              if (config.fontFamily) {
+                term.options.fontFamily = config.fontFamily;
+              }
+              if (config.fontSize) {
+                term.options.fontSize = config.fontSize;
+              }
+              if (config.lineHeight) {
+                term.options.lineHeight = config.lineHeight;
+              }
+              if (config.cursorStyle) {
+                term.options.cursorStyle = config.cursorStyle;
+              }
+              term.options.cursorBlink = config.cursorBlink !== false;
+            }
+          });
         }
       });
     }
