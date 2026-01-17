@@ -1169,6 +1169,18 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
   <div class="app-container">
     <!-- Control Panel -->
     <div class="control-panel">
+      <div class="tab-bar" id="tab-bar">
+        <button class="tab-button active" data-tab-id="1">
+          <span class="tab-label">Tab 1</span>
+          <span class="tab-activity"></span>
+          <button class="tab-close" title="Close tab">
+            <svg viewBox="0 0 16 16"><path d="M8 8.707l3.646 3.647.708-.707L8.707 8l3.647-3.646-.707-.708L8 7.293 4.354 3.646l-.707.708L7.293 8l-3.646 3.646.707.708L8 8.707z"/></svg>
+          </button>
+        </button>
+        <button class="add-tab-btn" id="add-tab-btn" title="New tab">
+          <svg viewBox="0 0 16 16"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg>
+        </button>
+      </div>
       <div class="control-panel-section">
         <span class="control-label">Project</span>
         <select class="project-select" id="global-project-select">
@@ -1189,7 +1201,7 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
 
     <!-- Grid Container -->
     <div class="grid-container">
-      <div class="grid terminals-1">
+      <div class="grid terminals-1" data-tab-id="1">
         <div class="terminal-container" id="term-container-0">
           <div class="terminal-header">
             <span class="terminal-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
