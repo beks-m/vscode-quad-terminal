@@ -656,6 +656,100 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       flex: 1;
       min-width: 120px;
     }
+    /* Tab Bar */
+    .tab-bar {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      margin-right: 8px;
+      padding-right: 8px;
+      border-right: 1px solid var(--vscode-editorGroup-border, var(--vscode-panel-border, #333));
+    }
+    .tab-button {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      color: var(--vscode-tab-inactiveForeground, #969696);
+      font-size: 11px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      position: relative;
+    }
+    .tab-button:hover {
+      background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.4));
+      color: var(--vscode-foreground, #ccc);
+    }
+    .tab-button.active {
+      background: var(--vscode-tab-activeBackground, #1e1e1e);
+      color: var(--vscode-tab-activeForeground, #fff);
+      border-bottom: 2px solid var(--vscode-focusBorder, #007acc);
+    }
+    .tab-button .tab-close {
+      display: none;
+      width: 14px;
+      height: 14px;
+      padding: 0;
+      margin-left: 2px;
+      background: transparent;
+      border: none;
+      border-radius: 3px;
+      color: inherit;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+    }
+    .tab-button:hover .tab-close,
+    .tab-button.active .tab-close {
+      display: flex;
+    }
+    .tab-button .tab-close:hover {
+      background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.6));
+      color: var(--vscode-errorForeground, #f48771);
+    }
+    .tab-button .tab-close svg {
+      width: 10px;
+      height: 10px;
+      fill: currentColor;
+    }
+    .tab-button .tab-activity {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--vscode-terminal-ansiYellow, #e5e510);
+      display: none;
+    }
+    .tab-button.has-activity .tab-activity {
+      display: block;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+    .add-tab-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      padding: 0;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      color: var(--vscode-descriptionForeground, #888);
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+    .add-tab-btn:hover {
+      background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.4));
+      color: var(--vscode-foreground, #ccc);
+    }
+    .add-tab-btn svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
     .control-panel-divider {
       display: none;
     }
@@ -1058,6 +1152,16 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     body.vscode-light .project-select {
       background: var(--vscode-input-background, #ffffff);
       border-color: var(--vscode-input-border, #cecece);
+    }
+    body.vscode-light .tab-button {
+      color: var(--vscode-tab-inactiveForeground, #6e6e6e);
+    }
+    body.vscode-light .tab-button.active {
+      background: var(--vscode-tab-activeBackground, #ffffff);
+      color: var(--vscode-tab-activeForeground, #333333);
+    }
+    body.vscode-light .tab-bar {
+      border-right-color: var(--vscode-editorGroup-border, #e7e7e7);
     }
   </style>
 </head>
