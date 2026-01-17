@@ -101,6 +101,9 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         case 'openFile':
           this.openFileInEditor(message.filePath, message.line, message.column, message.terminalId);
           break;
+        case 'openUrl':
+          vscode.env.openExternal(vscode.Uri.parse(message.url));
+          break;
       }
     });
 
@@ -296,7 +299,7 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  private resolveDropData(terminalId: number, data: { uriList?: string; text?: string; types?: string[] }) {
+  private resolveDropData(terminalId: number, data: { uriList?: string; text?: string; resourceUrls?: string; codeFiles?: string; types?: string[] }) {
     const paths: string[] = [];
 
     // Helper to extract path from URI string
@@ -326,8 +329,34 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       return null;
     };
 
+    // Try VS Code resourceurls
+    if (data.resourceUrls) {
+      try {
+        const resources = JSON.parse(data.resourceUrls);
+        resources.forEach((r: string) => {
+          const filePath = extractPath(r);
+          if (filePath) paths.push(filePath);
+        });
+      } catch (e) {
+        // Failed to parse resourceUrls
+      }
+    }
+
+    // Try codefiles
+    if (paths.length === 0 && data.codeFiles) {
+      try {
+        const files = JSON.parse(data.codeFiles);
+        files.forEach((f: string) => {
+          const filePath = extractPath(f);
+          if (filePath) paths.push(filePath);
+        });
+      } catch (e) {
+        // Failed to parse codeFiles
+      }
+    }
+
     // Process URI list
-    if (data.uriList) {
+    if (paths.length === 0 && data.uriList) {
       data.uriList.split(/\r?\n/).forEach(uri => {
         const filePath = extractPath(uri);
         if (filePath) paths.push(filePath);
@@ -1075,15 +1104,30 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
 
       // Drag and drop support for files
       const termContainer = document.getElementById('term-container-' + i);
+
+      termContainer.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        termContainer.style.outline = '2px solid var(--vscode-focusBorder, #007acc)';
+        termContainer.style.outlineOffset = '-2px';
+      });
+
+      termContainer.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        termContainer.style.outline = '';
+        termContainer.style.outlineOffset = '';
+      });
+
       termContainer.addEventListener('dragover', (e) => {
         e.preventDefault();
-        e.stopPropagation();
         e.dataTransfer.dropEffect = 'copy';
       });
 
       termContainer.addEventListener('drop', (e) => {
         e.preventDefault();
-        e.stopPropagation();
+        termContainer.style.outline = '';
+        termContainer.style.outlineOffset = '';
+
+        if (!terminalInitialized[i]) return;
 
         let paths = [];
 
@@ -1094,36 +1138,58 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
           if (!uri || uri.startsWith('#')) return null;
 
           if (uri.startsWith('file://')) {
-            // Handle file:// URIs - decode and extract path
             let path = decodeURIComponent(uri.slice(7));
-            // On Windows, file URIs are like file:///C:/path
-            // On Mac/Linux, they're like file:///path
+            // Windows: file:///C:/path -> C:/path
             if (path.length > 2 && path[0] === '/' && path[2] === ':') {
-              // Windows path like /C:/... - remove leading slash
               path = path.slice(1);
             }
             return path;
-          } else if (uri.startsWith('/') || /^[A-Za-z]:[\\\\\\/]/.test(uri)) {
-            // Already a path
+          } else if (uri.startsWith('/') || /^[A-Za-z]:[\\\\\\//]/.test(uri)) {
             return uri;
           }
           return null;
         }
 
-        // Collect all available data for resolution
-        const uriList = e.dataTransfer.getData('text/uri-list');
-        const text = e.dataTransfer.getData('text/plain');
+        // Collect all available data types
         const types = Array.from(e.dataTransfer.types || []);
 
-        // Try to get URI list (standard format)
-        if (uriList) {
+        // Try various data formats
+        const uriList = e.dataTransfer.getData('text/uri-list');
+        const text = e.dataTransfer.getData('text/plain');
+        const resourceUrls = e.dataTransfer.getData('resourceurls');
+        const codeFiles = e.dataTransfer.getData('codefiles');
+
+        // Try VS Code resource URLs first
+        if (resourceUrls) {
+          try {
+            const resources = JSON.parse(resourceUrls);
+            resources.forEach(r => {
+              const path = extractPath(r);
+              if (path) paths.push(path);
+            });
+          } catch (err) {}
+        }
+
+        // Try codefiles
+        if (paths.length === 0 && codeFiles) {
+          try {
+            const files = JSON.parse(codeFiles);
+            files.forEach(f => {
+              const path = extractPath(f);
+              if (path) paths.push(path);
+            });
+          } catch (err) {}
+        }
+
+        // Try URI list
+        if (paths.length === 0 && uriList) {
           uriList.split(/\\r?\\n/).forEach(uri => {
             const path = extractPath(uri);
             if (path) paths.push(path);
           });
         }
 
-        // Try plain text
+        // Try plain text (might contain paths)
         if (paths.length === 0 && text) {
           text.split(/\\r?\\n/).forEach(line => {
             const path = extractPath(line);
@@ -1131,37 +1197,31 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
           });
         }
 
-        // Try to get paths from Files API (external file drops)
+        // Try Files API
         if (paths.length === 0 && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
           for (let f = 0; f < e.dataTransfer.files.length; f++) {
             const file = e.dataTransfer.files[f];
-            if (file.path) {
-              paths.push(file.path);
-            }
+            if (file.path) paths.push(file.path);
+            else if (file.name) paths.push(file.name);
           }
         }
 
-        if (paths.length > 0 && terminalInitialized[i]) {
-          // We found paths locally, send them directly
+        if (paths.length > 0) {
           const quotedPaths = paths.map(p => p.includes(' ') ? '"' + p + '"' : p);
           vscode.postMessage({
             command: 'input',
             terminalId: i,
             data: quotedPaths.join(' ')
           });
-          if (terminals[i]) {
-            terminals[i].focus();
-          }
-        } else if ((uriList || text) && terminalInitialized[i]) {
-          // Send to extension for resolution (handles VS Code internal URIs)
+          if (terminals[i]) terminals[i].focus();
+        } else {
+          // Send all data to extension for resolution
           vscode.postMessage({
             command: 'resolveDrop',
             terminalId: i,
-            data: { uriList, text, types }
+            data: { uriList, text, resourceUrls, codeFiles, types }
           });
-          if (terminals[i]) {
-            terminals[i].focus();
-          }
+          if (terminals[i]) terminals[i].focus();
         }
       });
     }
@@ -1395,28 +1455,39 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
           const lineText = line.translateToString(true);
           const links = [];
 
-          // Regex to match file paths with optional line:column
-          // Matches: /path/to/file.ts:123:45, src/file.ts:10, ./file.ts, etc.
-          const filePathRegex = /(?:^|[\\s"'\\[\\(])(((?:\\.{1,2}\\/|\\/)(?:[^\\s:*?"<>|]+\\/)*[^\\s:*?"<>|]+|[a-zA-Z]:[\\\\](?:[^\\s:*?"<>|]+[\\\\])*[^\\s:*?"<>|]+|[a-zA-Z0-9_\\-]+(?:\\/[a-zA-Z0-9_\\-.]+)+\\.[a-zA-Z0-9]+))(?::(\\d+))?(?::(\\d+))?/g;
+          // Simple file path pattern: matches paths with extensions and optional :line:col
+          // Examples: src/file.ts:10:5, ./foo.ts, /abs/path.js:42, file.tsx:10
+          const fileRegex = /([.]{0,2}\\/)?([\\w.-]+\\/)*[\\w.-]+\\.[a-zA-Z]{1,10}(:\\d+)?(:\\d+)?/g;
 
           let match;
-          while ((match = filePathRegex.exec(lineText)) !== null) {
+          while ((match = fileRegex.exec(lineText)) !== null) {
             const fullMatch = match[0];
-            const filePath = match[1];
-            const lineNum = match[3] ? parseInt(match[3], 10) : undefined;
-            const colNum = match[4] ? parseInt(match[4], 10) : undefined;
 
-            // Calculate start position (accounting for leading whitespace/quotes in match)
-            const startIndex = match.index + (fullMatch.length - fullMatch.trimStart().length);
-            const linkText = fullMatch.trimStart();
+            // Skip URLs
+            if (lineText.substring(Math.max(0, match.index - 10), match.index).includes('://')) continue;
+
+            // Skip very short matches
+            if (fullMatch.length < 3) continue;
+
+            // Parse line:col from the match
+            const parts = fullMatch.split(':');
+            const filePath = parts[0];
+            const lineNum = parts[1] ? parseInt(parts[1], 10) : undefined;
+            const colNum = parts[2] ? parseInt(parts[2], 10) : undefined;
+
+            // Skip if no extension
+            if (!/\\.[a-zA-Z0-9]+$/.test(filePath)) continue;
+
+            const matchStart = match.index;
+            const matchEnd = matchStart + fullMatch.length;
 
             links.push({
               range: {
-                start: { x: startIndex + 1, y: bufferLineNumber + 1 },
-                end: { x: startIndex + linkText.length + 1, y: bufferLineNumber + 1 }
+                start: { x: matchStart + 1, y: bufferLineNumber + 1 },
+                end: { x: matchEnd + 1, y: bufferLineNumber + 1 }
               },
-              text: linkText,
-              activate: () => {
+              text: fullMatch,
+              activate: (event, text) => {
                 vscode.postMessage({
                   command: 'openFile',
                   filePath: filePath,
@@ -1432,10 +1503,173 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         }
       });
 
-      // Focus terminal on click
-      container.addEventListener('click', () => {
-        term.focus();
+      // Register URL link provider for http/https links
+      term.registerLinkProvider({
+        provideLinks: (bufferLineNumber, callback) => {
+          const line = term.buffer.active.getLine(bufferLineNumber);
+          if (!line) {
+            callback(undefined);
+            return;
+          }
+          const lineText = line.translateToString(true);
+          const links = [];
+
+          // Match URLs
+          const urlRegex = /https?:\\/\\/[^\\s<>"{}|\\\\^\\[\\]]+/g;
+
+          let match;
+          while ((match = urlRegex.exec(lineText)) !== null) {
+            const url = match[0].replace(/[.,;:!?)]+$/, ''); // Trim trailing punctuation
+            const matchStart = match.index;
+            const matchEnd = matchStart + url.length;
+
+            links.push({
+              range: {
+                start: { x: matchStart + 1, y: bufferLineNumber + 1 },
+                end: { x: matchEnd + 1, y: bufferLineNumber + 1 }
+              },
+              text: url,
+              activate: (event, text) => {
+                vscode.postMessage({
+                  command: 'openUrl',
+                  url: url
+                });
+              }
+            });
+          }
+
+          callback(links.length > 0 ? links : undefined);
+        }
       });
+
+      // Store detected links for click handling
+      let currentLinks = [];
+
+      // Helper to detect links at a position
+      function detectLinksAtPosition(x, y) {
+        const line = term.buffer.active.getLine(y);
+        if (!line) return [];
+
+        const lineText = line.translateToString(true);
+        const links = [];
+
+        // File paths
+        const fileRegex = /([.]{0,2}\\/)?([\\w.-]+\\/)*[\\w.-]+\\.[a-zA-Z]{1,10}(:\\d+)?(:\\d+)?/g;
+        let match;
+        while ((match = fileRegex.exec(lineText)) !== null) {
+          const fullMatch = match[0];
+          if (fullMatch.length < 3) continue;
+          if (lineText.substring(Math.max(0, match.index - 10), match.index).includes('://')) continue;
+
+          const parts = fullMatch.split(':');
+          const filePath = parts[0];
+          if (!/\\.[a-zA-Z0-9]+$/.test(filePath)) continue;
+
+          const startX = match.index;
+          const endX = startX + fullMatch.length;
+
+          if (x >= startX && x < endX) {
+            links.push({
+              type: 'file',
+              path: filePath,
+              line: parts[1] ? parseInt(parts[1], 10) : undefined,
+              column: parts[2] ? parseInt(parts[2], 10) : undefined
+            });
+          }
+        }
+
+        // URLs
+        const urlRegex = /https?:\\/\\/[^\\s<>"{}|\\\\^\\[\\]]+/g;
+        while ((match = urlRegex.exec(lineText)) !== null) {
+          const url = match[0].replace(/[.,;:!?)]+$/, '');
+          const startX = match.index;
+          const endX = startX + url.length;
+
+          if (x >= startX && x < endX) {
+            links.push({ type: 'url', url: url });
+          }
+        }
+
+        return links;
+      }
+
+      // Get cell dimensions helper
+      function getCellDimensions() {
+        try {
+          return {
+            width: term._core._renderService.dimensions.css.cell.width,
+            height: term._core._renderService.dimensions.css.cell.height
+          };
+        } catch (e) {
+          return null;
+        }
+      }
+
+      // Convert mouse position to terminal coordinates
+      function getTerminalPosition(e, element) {
+        const rect = element.getBoundingClientRect();
+        const dims = getCellDimensions();
+        if (!dims) return null;
+
+        const x = Math.floor((e.clientX - rect.left) / dims.width);
+        const y = Math.floor((e.clientY - rect.top) / dims.height);
+        const bufferY = y + term.buffer.active.viewportY;
+
+        return { x, y, bufferY };
+      }
+
+      // Wait for xterm to fully render, then attach handlers to the screen element
+      setTimeout(() => {
+        const xtermScreen = container.querySelector('.xterm-screen');
+        if (!xtermScreen) return;
+
+        // Hover handler - change cursor when over links
+        xtermScreen.addEventListener('mousemove', (e) => {
+          const pos = getTerminalPosition(e, xtermScreen);
+          if (!pos) return;
+
+          const links = detectLinksAtPosition(pos.x, pos.bufferY);
+          xtermScreen.style.cursor = links.length > 0 ? 'pointer' : 'text';
+        });
+
+        xtermScreen.addEventListener('mouseleave', () => {
+          xtermScreen.style.cursor = 'text';
+        });
+
+        // Click handler for links
+        xtermScreen.addEventListener('mousedown', (e) => {
+          // Only handle left clicks
+          if (e.button !== 0) return;
+
+          const pos = getTerminalPosition(e, xtermScreen);
+          if (!pos) return;
+
+          const links = detectLinksAtPosition(pos.x, pos.bufferY);
+
+          if (links.length > 0) {
+            const link = links[0];
+
+            // Prevent xterm from starting text selection
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (link.type === 'file') {
+              vscode.postMessage({
+                command: 'openFile',
+                filePath: link.path,
+                line: link.line,
+                column: link.column,
+                terminalId: i
+              });
+            } else if (link.type === 'url') {
+              vscode.postMessage({
+                command: 'openUrl',
+                url: link.url
+              });
+            }
+          }
+        });
+      }, 100);
 
       terminals[i] = term;
       fitAddons[i] = fitAddon;
