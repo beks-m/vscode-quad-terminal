@@ -140,6 +140,15 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         case 'pickFiles':
           this.pickFilesForTerminal(message.tabId || this.activeTabId, message.terminalId);
           break;
+        case 'createTab':
+          this.createTab();
+          break;
+        case 'switchTab':
+          this.switchTab(message.tabId);
+          break;
+        case 'closeTab':
+          this.closeTab(message.tabId);
+          break;
       }
     });
 
@@ -507,6 +516,59 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       clearTimeout(timer);
       tabState?.idleTimers.delete(terminalId);
     }
+  }
+
+  private createTab(): number {
+    const newTabId = this.nextTabId++;
+    this.tabs.set(newTabId, this.createTabState());
+    this.activeTabId = newTabId;
+    this.sendToWebview('tabCreated', { tabId: newTabId });
+    return newTabId;
+  }
+
+  private switchTab(tabId: number) {
+    if (this.tabs.has(tabId)) {
+      this.activeTabId = tabId;
+      this.sendToWebview('tabSwitched', { tabId });
+    }
+  }
+
+  private async closeTab(tabId: number) {
+    const tabState = this.getTabState(tabId);
+    if (!tabState) return;
+
+    // Check if tab has active terminals
+    if (tabState.ptyProcesses.size > 0) {
+      const answer = await vscode.window.showWarningMessage(
+        `Tab ${tabId} has ${tabState.ptyProcesses.size} active terminal(s). Close anyway?`,
+        { modal: true },
+        'Yes', 'No'
+      );
+      if (answer !== 'Yes') return;
+    }
+
+    // Kill all terminals in this tab
+    for (const terminalId of tabState.ptyProcesses.keys()) {
+      this.cleanupTerminal(tabId, terminalId);
+    }
+
+    // Remove tab
+    this.tabs.delete(tabId);
+
+    // If this was the active tab, switch to another
+    if (this.activeTabId === tabId) {
+      const remainingTabs = Array.from(this.tabs.keys());
+      if (remainingTabs.length > 0) {
+        this.activeTabId = remainingTabs[0];
+      } else {
+        // Create new tab if none left
+        this.tabs.set(1, this.createTabState());
+        this.activeTabId = 1;
+        this.nextTabId = 2;
+      }
+    }
+
+    this.sendToWebview('tabClosed', { tabId, newActiveTabId: this.activeTabId });
   }
 
   private sendToWebview(command: string, data: any) {
