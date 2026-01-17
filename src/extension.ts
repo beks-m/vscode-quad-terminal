@@ -104,6 +104,9 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         case 'openUrl':
           vscode.env.openExternal(vscode.Uri.parse(message.url));
           break;
+        case 'pickFiles':
+          this.pickFilesForTerminal(message.terminalId);
+          break;
       }
     });
 
@@ -413,6 +416,30 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
+  private async pickFilesForTerminal(terminalId: number) {
+    const projectPath = this.terminalProjects.get(terminalId);
+
+    const result = await vscode.window.showOpenDialog({
+      canSelectMany: true,
+      canSelectFolders: true,
+      canSelectFiles: true,
+      defaultUri: projectPath ? vscode.Uri.file(projectPath) : undefined,
+      title: 'Select files to insert path'
+    });
+
+    if (result && result.length > 0) {
+      const paths = result.map(uri => {
+        const p = uri.fsPath;
+        return p.includes(' ') ? `"${p}"` : p;
+      });
+
+      const ptyProcess = this.ptyProcesses.get(terminalId);
+      if (ptyProcess) {
+        ptyProcess.write(paths.join(' '));
+      }
+    }
+  }
+
   private markBusy(terminalId: number) {
     // Clear existing timer
     this.clearIdleTimer(terminalId);
@@ -688,6 +715,25 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     .terminal-container:focus-within {
       z-index: 1;
     }
+    .terminal-container.drag-over {
+      outline: 2px solid var(--vscode-focusBorder, #007acc);
+      outline-offset: -2px;
+      z-index: 2;
+    }
+    .terminal-container.drag-over::after {
+      content: 'Drop file here';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--vscode-focusBorder, #007acc);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 12px;
+      z-index: 100;
+      pointer-events: none;
+    }
 
     /* Terminal Header */
     .terminal-header {
@@ -946,6 +992,9 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
             <span class="terminal-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
             <span class="terminal-title empty" id="terminal-title-0">Terminal 1</span>
             <div class="header-actions">
+              <button class="action-btn pick-files-btn" id="pick-files-0" title="Insert file path">
+                <svg viewBox="0 0 16 16"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v.64c.57.265.94.876.856 1.546l-.64 5.124A2.5 2.5 0 0 1 12.733 15H3.266a2.5 2.5 0 0 1-2.481-2.19l-.64-5.124A1.5 1.5 0 0 1 1 6.14V3.5zM2 6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3H2.5a.5.5 0 0 0-.5.5V6z"/></svg>
+              </button>
               <button class="action-btn fullscreen-btn" id="fullscreen-0" title="Toggle fullscreen">
                 <svg class="expand-icon" viewBox="0 0 16 16"><path d="M3 3v4h1V4h3V3H3zm10 0h-4v1h3v3h1V3zM4 12v-3H3v4h4v-1H4zm8-3v3h-3v1h4V9h-1z"/></svg>
                 <svg class="collapse-icon" style="display:none" viewBox="0 0 16 16"><path d="M2 2h5v5H2V2zm1 1v3h3V3H3zm7-1h5v5h-5V2zm1 1v3h3V3h-3zM2 9h5v5H2V9zm1 1v3h3v-3H3zm7-1h5v5h-5V9zm1 1v3h3v-3h-3z"/></svg>
@@ -970,6 +1019,9 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
             <span class="terminal-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
             <span class="terminal-title empty" id="terminal-title-1">Terminal 2</span>
             <div class="header-actions">
+              <button class="action-btn pick-files-btn" id="pick-files-1" title="Insert file path">
+                <svg viewBox="0 0 16 16"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v.64c.57.265.94.876.856 1.546l-.64 5.124A2.5 2.5 0 0 1 12.733 15H3.266a2.5 2.5 0 0 1-2.481-2.19l-.64-5.124A1.5 1.5 0 0 1 1 6.14V3.5zM2 6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3H2.5a.5.5 0 0 0-.5.5V6z"/></svg>
+              </button>
               <button class="action-btn fullscreen-btn" id="fullscreen-1" title="Toggle fullscreen">
                 <svg class="expand-icon" viewBox="0 0 16 16"><path d="M3 3v4h1V4h3V3H3zm10 0h-4v1h3v3h1V3zM4 12v-3H3v4h4v-1H4zm8-3v3h-3v1h4V9h-1z"/></svg>
                 <svg class="collapse-icon" style="display:none" viewBox="0 0 16 16"><path d="M2 2h5v5H2V2zm1 1v3h3V3H3zm7-1h5v5h-5V2zm1 1v3h3V3h-3zM2 9h5v5H2V9zm1 1v3h3v-3H3zm7-1h5v5h-5V9zm1 1v3h3v-3h-3z"/></svg>
@@ -994,6 +1046,9 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
             <span class="terminal-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
             <span class="terminal-title empty" id="terminal-title-2">Terminal 3</span>
             <div class="header-actions">
+              <button class="action-btn pick-files-btn" id="pick-files-2" title="Insert file path">
+                <svg viewBox="0 0 16 16"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v.64c.57.265.94.876.856 1.546l-.64 5.124A2.5 2.5 0 0 1 12.733 15H3.266a2.5 2.5 0 0 1-2.481-2.19l-.64-5.124A1.5 1.5 0 0 1 1 6.14V3.5zM2 6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3H2.5a.5.5 0 0 0-.5.5V6z"/></svg>
+              </button>
               <button class="action-btn fullscreen-btn" id="fullscreen-2" title="Toggle fullscreen">
                 <svg class="expand-icon" viewBox="0 0 16 16"><path d="M3 3v4h1V4h3V3H3zm10 0h-4v1h3v3h1V3zM4 12v-3H3v4h4v-1H4zm8-3v3h-3v1h4V9h-1z"/></svg>
                 <svg class="collapse-icon" style="display:none" viewBox="0 0 16 16"><path d="M2 2h5v5H2V2zm1 1v3h3V3H3zm7-1h5v5h-5V2zm1 1v3h3V3h-3zM2 9h5v5H2V9zm1 1v3h3v-3H3zm7-1h5v5h-5V9zm1 1v3h3v-3h-3z"/></svg>
@@ -1018,6 +1073,9 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
             <span class="terminal-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span>
             <span class="terminal-title empty" id="terminal-title-3">Terminal 4</span>
             <div class="header-actions">
+              <button class="action-btn pick-files-btn" id="pick-files-3" title="Insert file path">
+                <svg viewBox="0 0 16 16"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v.64c.57.265.94.876.856 1.546l-.64 5.124A2.5 2.5 0 0 1 12.733 15H3.266a2.5 2.5 0 0 1-2.481-2.19l-.64-5.124A1.5 1.5 0 0 1 1 6.14V3.5zM2 6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3H2.5a.5.5 0 0 0-.5.5V6z"/></svg>
+              </button>
               <button class="action-btn fullscreen-btn" id="fullscreen-3" title="Toggle fullscreen">
                 <svg class="expand-icon" viewBox="0 0 16 16"><path d="M3 3v4h1V4h3V3H3zm10 0h-4v1h3v3h1V3zM4 12v-3H3v4h4v-1H4zm8-3v3h-3v1h4V9h-1z"/></svg>
                 <svg class="collapse-icon" style="display:none" viewBox="0 0 16 16"><path d="M2 2h5v5H2V2zm1 1v3h3V3H3zm7-1h5v5h-5V2zm1 1v3h3V3h-3zM2 9h5v5H2V9zm1 1v3h3v-3H3zm7-1h5v5h-5V9zm1 1v3h3v-3h-3z"/></svg>
@@ -1102,30 +1160,40 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         toggleFullscreen(i);
       });
 
+      const pickFilesBtn = document.getElementById('pick-files-' + i);
+      pickFilesBtn.addEventListener('click', () => {
+        vscode.postMessage({
+          command: 'pickFiles',
+          terminalId: i
+        });
+      });
+
       // Drag and drop support for files
       const termContainer = document.getElementById('term-container-' + i);
 
       termContainer.addEventListener('dragenter', (e) => {
         e.preventDefault();
-        termContainer.style.outline = '2px solid var(--vscode-focusBorder, #007acc)';
-        termContainer.style.outlineOffset = '-2px';
+        e.stopPropagation();
+        termContainer.classList.add('drag-over');
       });
 
       termContainer.addEventListener('dragleave', (e) => {
-        e.preventDefault();
-        termContainer.style.outline = '';
-        termContainer.style.outlineOffset = '';
+        // Only remove if leaving the container entirely
+        if (!termContainer.contains(e.relatedTarget)) {
+          termContainer.classList.remove('drag-over');
+        }
       });
 
       termContainer.addEventListener('dragover', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         e.dataTransfer.dropEffect = 'copy';
       });
 
       termContainer.addEventListener('drop', (e) => {
         e.preventDefault();
-        termContainer.style.outline = '';
-        termContainer.style.outlineOffset = '';
+        e.stopPropagation();
+        termContainer.classList.remove('drag-over');
 
         if (!terminalInitialized[i]) return;
 
@@ -1158,6 +1226,24 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         const text = e.dataTransfer.getData('text/plain');
         const resourceUrls = e.dataTransfer.getData('resourceurls');
         const codeFiles = e.dataTransfer.getData('codefiles');
+
+        // DEBUG: Show what we received
+        console.log('=== DROP DEBUG ===');
+        console.log('types:', types);
+        console.log('uriList:', uriList);
+        console.log('text:', text);
+        console.log('resourceUrls:', resourceUrls);
+        console.log('codeFiles:', codeFiles);
+        console.log('files:', e.dataTransfer.files.length);
+        for (let fi = 0; fi < e.dataTransfer.files.length; fi++) {
+          const f = e.dataTransfer.files[fi];
+          console.log('file', fi, ':', f.name, f.path, f.type);
+        }
+        // Try all types
+        types.forEach(t => {
+          console.log('getData(' + t + '):', e.dataTransfer.getData(t));
+        });
+        console.log('==================');
 
         // Try VS Code resource URLs first
         if (resourceUrls) {
