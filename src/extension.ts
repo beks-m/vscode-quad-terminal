@@ -63,6 +63,14 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     };
   }
 
+  private getTabState(tabId: number): TabState | undefined {
+    return this.tabs.get(tabId);
+  }
+
+  private getActiveTabState(): TabState | undefined {
+    return this.tabs.get(this.activeTabId);
+  }
+
   private isValidTerminalId(terminalId: number): boolean {
     return VALID_TERMINAL_IDS.has(terminalId);
   }
@@ -95,38 +103,42 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
           break;
         case 'selectProject':
           if (this.isValidTerminalId(message.terminalId)) {
-            this.startTerminalWithProject(message.terminalId, message.projectPath, message.resume);
+            const tabId = message.tabId || this.activeTabId;
+            this.startTerminalWithProject(tabId, message.terminalId, message.projectPath, message.resume);
           }
           break;
         case 'input':
           if (this.isValidTerminalId(message.terminalId)) {
-            this.handleInput(message.terminalId, message.data);
+            const tabId = message.tabId || this.activeTabId;
+            this.handleInput(tabId, message.terminalId, message.data);
           }
           break;
         case 'resize':
           if (this.isValidTerminalId(message.terminalId)) {
-            this.handleResize(message.terminalId, message.cols, message.rows);
+            const tabId = message.tabId || this.activeTabId;
+            this.handleResize(tabId, message.terminalId, message.cols, message.rows);
           }
           break;
         case 'kill':
           if (this.isValidTerminalId(message.terminalId)) {
-            this.killTerminal(message.terminalId);
+            const tabId = message.tabId || this.activeTabId;
+            this.killTerminal(tabId, message.terminalId);
           }
           break;
         case 'resolveDrop':
-          // Handle drop data that couldn't be resolved in the webview
           if (this.isValidTerminalId(message.terminalId)) {
-            this.resolveDropData(message.terminalId, message.data);
+            const tabId = message.tabId || this.activeTabId;
+            this.resolveDropData(tabId, message.terminalId, message.data);
           }
           break;
         case 'openFile':
-          this.openFileInEditor(message.filePath, message.line, message.column, message.terminalId);
+          this.openFileInEditor(message.filePath, message.line, message.column, message.tabId, message.terminalId);
           break;
         case 'openUrl':
           vscode.env.openExternal(vscode.Uri.parse(message.url));
           break;
         case 'pickFiles':
-          this.pickFilesForTerminal(message.terminalId);
+          this.pickFilesForTerminal(message.tabId || this.activeTabId, message.terminalId);
           break;
       }
     });
@@ -214,12 +226,15 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     }));
   }
 
-  private startTerminalWithProject(terminalId: number, projectPath: string, resume: boolean = false) {
+  private startTerminalWithProject(tabId: number, terminalId: number, projectPath: string, resume: boolean = false) {
+    const tabState = this.getTabState(tabId);
+    if (!tabState) return;
+
     // Clean up existing resources for this terminal
-    this.cleanupTerminal(terminalId);
+    this.cleanupTerminal(tabId, terminalId);
 
     // Clear the terminal in webview
-    this.sendToWebview('clear', { terminalId });
+    this.sendToWebview('clear', { tabId, terminalId });
 
     const shell = os.platform() === 'win32'
       ? 'powershell.exe'
@@ -238,74 +253,75 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         } as { [key: string]: string }
       });
 
-      this.ptyProcesses.set(terminalId, ptyProcess);
-      this.terminalProjects.set(terminalId, projectPath);
+      tabState.ptyProcesses.set(terminalId, ptyProcess);
+      tabState.terminalProjects.set(terminalId, projectPath);
 
       // Send PTY output to webview
       ptyProcess.onData((data: string) => {
-        this.sendToWebview('output', { terminalId, data });
-        this.markBusy(terminalId);
+        this.sendToWebview('output', { tabId, terminalId, data });
+        this.markBusy(tabId, terminalId);
       });
 
-      // Handle PTY exit (natural termination like typing 'exit')
+      // Handle PTY exit
       ptyProcess.onExit(({ exitCode, signal }) => {
-        console.log(`[QuadTerminal] Terminal ${terminalId} exited with code ${exitCode}`);
-        this.cleanupTerminal(terminalId);
-        this.sendToWebview('killed', { terminalId });
+        console.log(`[QuadTerminal] Tab ${tabId} Terminal ${terminalId} exited with code ${exitCode}`);
+        this.cleanupTerminal(tabId, terminalId);
+        this.sendToWebview('killed', { tabId, terminalId });
       });
 
-      // Auto-run claude after a short delay for shell to initialize
+      // Auto-run claude after shell init
       const timeout = setTimeout(() => {
-        // Verify PTY still exists before writing
-        if (this.ptyProcesses.has(terminalId)) {
+        if (tabState.ptyProcesses.has(terminalId)) {
           const claudeCmd = resume ? 'claude --dangerously-skip-permissions --resume\r' : 'claude --dangerously-skip-permissions\r';
           ptyProcess.write(claudeCmd);
         }
-        this.claudeCommandTimeouts.delete(terminalId);
+        tabState.claudeCommandTimeouts.delete(terminalId);
       }, SHELL_INIT_DELAY_MS);
-      this.claudeCommandTimeouts.set(terminalId, timeout);
+      tabState.claudeCommandTimeouts.set(terminalId, timeout);
 
     } catch (error) {
-      console.error(`[QuadTerminal] Failed to create PTY process ${terminalId}:`, error);
+      console.error(`[QuadTerminal] Failed to create PTY process tab ${tabId} terminal ${terminalId}:`, error);
       this.sendToWebview('error', {
+        tabId,
         terminalId,
         message: `Failed to start terminal: ${error}`
       });
     }
   }
 
-  private cleanupTerminal(terminalId: number) {
-    // Kill existing PTY
-    const existingPty = this.ptyProcesses.get(terminalId);
+  private cleanupTerminal(tabId: number, terminalId: number) {
+    const tabState = this.getTabState(tabId);
+    if (!tabState) return;
+
+    const existingPty = tabState.ptyProcesses.get(terminalId);
     if (existingPty) {
       existingPty.kill();
-      this.ptyProcesses.delete(terminalId);
+      tabState.ptyProcesses.delete(terminalId);
     }
 
-    // Clear idle timer
-    this.clearIdleTimer(terminalId);
+    this.clearIdleTimer(tabId, terminalId);
 
-    // Clear claude command timeout
-    const cmdTimeout = this.claudeCommandTimeouts.get(terminalId);
+    const cmdTimeout = tabState.claudeCommandTimeouts.get(terminalId);
     if (cmdTimeout) {
       clearTimeout(cmdTimeout);
-      this.claudeCommandTimeouts.delete(terminalId);
+      tabState.claudeCommandTimeouts.delete(terminalId);
     }
 
-    // Clear other state
-    this.terminalBusy.delete(terminalId);
-    this.terminalProjects.delete(terminalId);
+    tabState.terminalBusy.delete(terminalId);
+    tabState.terminalProjects.delete(terminalId);
   }
 
-  private handleInput(terminalId: number, data: string) {
-    const ptyProcess = this.ptyProcesses.get(terminalId);
+  private handleInput(tabId: number, terminalId: number, data: string) {
+    const tabState = this.getTabState(tabId);
+    const ptyProcess = tabState?.ptyProcesses.get(terminalId);
     if (ptyProcess) {
       ptyProcess.write(data);
     }
   }
 
-  private handleResize(terminalId: number, cols: number, rows: number) {
-    const ptyProcess = this.ptyProcesses.get(terminalId);
+  private handleResize(tabId: number, terminalId: number, cols: number, rows: number) {
+    const tabState = this.getTabState(tabId);
+    const ptyProcess = tabState?.ptyProcesses.get(terminalId);
     if (ptyProcess && cols > 0 && rows > 0) {
       try {
         ptyProcess.resize(cols, rows);
@@ -315,15 +331,16 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  private killTerminal(terminalId: number) {
-    const ptyProcess = this.ptyProcesses.get(terminalId);
+  private killTerminal(tabId: number, terminalId: number) {
+    const tabState = this.getTabState(tabId);
+    const ptyProcess = tabState?.ptyProcesses.get(terminalId);
     if (ptyProcess) {
-      this.cleanupTerminal(terminalId);
-      this.sendToWebview('killed', { terminalId });
+      this.cleanupTerminal(tabId, terminalId);
+      this.sendToWebview('killed', { tabId, terminalId });
     }
   }
 
-  private resolveDropData(terminalId: number, data: { uriList?: string; text?: string; resourceUrls?: string; codeFiles?: string; types?: string[] }) {
+  private resolveDropData(tabId: number, terminalId: number, data: { uriList?: string; text?: string; resourceUrls?: string; codeFiles?: string; types?: string[] }) {
     const paths: string[] = [];
 
     // Helper to extract path from URI string
@@ -397,21 +414,23 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
 
     // Send resolved paths to terminal
     if (paths.length > 0) {
-      const ptyProcess = this.ptyProcesses.get(terminalId);
+      const tabState = this.getTabState(tabId);
+      const ptyProcess = tabState?.ptyProcesses.get(terminalId);
       if (ptyProcess) {
         const quotedPaths = paths.map(p => p.includes(' ') ? `"${p}"` : p);
         // Send to webview to display, and to PTY as input
-        this.sendToWebview('dropResolved', { terminalId, paths: quotedPaths.join(' ') });
+        this.sendToWebview('dropResolved', { tabId, terminalId, paths: quotedPaths.join(' ') });
       }
     }
   }
 
-  private async openFileInEditor(filePath: string, line?: number, column?: number, terminalId?: number) {
+  private async openFileInEditor(filePath: string, line?: number, column?: number, tabId?: number, terminalId?: number) {
     try {
       // Resolve relative paths using the terminal's working directory
       let absolutePath = filePath;
-      if (!path.isAbsolute(filePath) && terminalId !== undefined) {
-        const projectPath = this.terminalProjects.get(terminalId);
+      if (!path.isAbsolute(filePath) && tabId !== undefined && terminalId !== undefined) {
+        const tabState = this.getTabState(tabId);
+        const projectPath = tabState?.terminalProjects.get(terminalId);
         if (projectPath) {
           absolutePath = path.join(projectPath, filePath);
         }
@@ -437,8 +456,9 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  private async pickFilesForTerminal(terminalId: number) {
-    const projectPath = this.terminalProjects.get(terminalId);
+  private async pickFilesForTerminal(tabId: number, terminalId: number) {
+    const tabState = this.getTabState(tabId);
+    const projectPath = tabState?.terminalProjects.get(terminalId);
 
     const result = await vscode.window.showOpenDialog({
       canSelectMany: true,
@@ -454,36 +474,38 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         return p.includes(' ') ? `"${p}"` : p;
       });
 
-      const ptyProcess = this.ptyProcesses.get(terminalId);
+      const ptyProcess = tabState?.ptyProcesses.get(terminalId);
       if (ptyProcess) {
         ptyProcess.write(paths.join(' '));
       }
     }
   }
 
-  private markBusy(terminalId: number) {
-    // Clear existing timer
-    this.clearIdleTimer(terminalId);
+  private markBusy(tabId: number, terminalId: number) {
+    const tabState = this.getTabState(tabId);
+    if (!tabState) return;
 
-    // Mark as busy if not already
-    if (!this.terminalBusy.get(terminalId)) {
-      this.terminalBusy.set(terminalId, true);
-      this.sendToWebview('status', { terminalId, status: 'busy' });
+    this.clearIdleTimer(tabId, terminalId);
+
+    if (!tabState.terminalBusy.get(terminalId)) {
+      tabState.terminalBusy.set(terminalId, true);
+      this.sendToWebview('status', { tabId, terminalId, status: 'busy' });
     }
 
-    // Set timer to mark as idle after no output
     const timer = setTimeout(() => {
-      this.terminalBusy.set(terminalId, false);
-      this.sendToWebview('status', { terminalId, status: 'idle' });
+      tabState.terminalBusy.set(terminalId, false);
+      this.sendToWebview('status', { tabId, terminalId, status: 'idle' });
+      tabState.idleTimers.delete(terminalId);
     }, IDLE_TIMEOUT_MS);
-    this.idleTimers.set(terminalId, timer);
+    tabState.idleTimers.set(terminalId, timer);
   }
 
-  private clearIdleTimer(terminalId: number) {
-    const timer = this.idleTimers.get(terminalId);
+  private clearIdleTimer(tabId: number, terminalId: number) {
+    const tabState = this.getTabState(tabId);
+    const timer = tabState?.idleTimers.get(terminalId);
     if (timer) {
       clearTimeout(timer);
-      this.idleTimers.delete(terminalId);
+      tabState?.idleTimers.delete(terminalId);
     }
   }
 
@@ -494,27 +516,21 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
   }
 
   private disposeAllResources() {
-    // Kill all PTY processes
-    this.ptyProcesses.forEach((ptyProcess) => {
-      ptyProcess.kill();
-    });
-    this.ptyProcesses.clear();
-
-    // Clear all idle timers
-    this.idleTimers.forEach((timer) => {
-      clearTimeout(timer);
-    });
-    this.idleTimers.clear();
-
-    // Clear all claude command timeouts
-    this.claudeCommandTimeouts.forEach((timeout) => {
-      clearTimeout(timeout);
-    });
-    this.claudeCommandTimeouts.clear();
-
-    // Clear other state
-    this.terminalBusy.clear();
-    this.terminalProjects.clear();
+    for (const [tabId, tabState] of this.tabs) {
+      for (const [terminalId, ptyProcess] of tabState.ptyProcesses) {
+        ptyProcess.kill();
+      }
+      for (const timer of tabState.idleTimers.values()) {
+        clearTimeout(timer);
+      }
+      for (const timeout of tabState.claudeCommandTimeouts.values()) {
+        clearTimeout(timeout);
+      }
+    }
+    this.tabs.clear();
+    this.tabs.set(1, this.createTabState());
+    this.activeTabId = 1;
+    this.nextTabId = 2;
   }
 
   public refresh() {
