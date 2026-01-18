@@ -125,6 +125,12 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
             this.killTerminal(tabId, message.terminalId);
           }
           break;
+        case 'restart':
+          if (this.isValidTerminalId(message.terminalId)) {
+            const tabId = message.tabId || this.activeTabId;
+            this.restartTerminal(tabId, message.terminalId);
+          }
+          break;
         case 'resolveDrop':
           if (this.isValidTerminalId(message.terminalId)) {
             const tabId = message.tabId || this.activeTabId;
@@ -349,6 +355,25 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       this.cleanupTerminal(tabId, terminalId);
       this.sendToWebview('killed', { tabId, terminalId });
     }
+  }
+
+  private restartTerminal(tabId: number, terminalId: number) {
+    const tabState = this.getTabState(tabId);
+    if (!tabState) return;
+
+    // Get the current project path before killing
+    const projectPath = tabState.terminalProjects.get(terminalId);
+    if (!projectPath) return; // No project to restart
+
+    // Kill the terminal
+    this.cleanupTerminal(tabId, terminalId);
+    this.sendToWebview('killed', { tabId, terminalId });
+
+    // Restart with the same project after a short delay
+    setTimeout(() => {
+      const resume = false; // Don't resume on restart
+      this.startTerminalWithProject(tabId, terminalId, projectPath, resume);
+    }, 100);
   }
 
   private resolveDropData(tabId: number, terminalId: number, data: { uriList?: string; text?: string; resourceUrls?: string; codeFiles?: string; types?: string[] }) {
@@ -797,20 +822,15 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       display: flex;
       align-items: center;
       gap: 4px;
-      font-size: 11px;
       color: var(--vscode-foreground, #ccc);
       cursor: pointer;
       user-select: none;
       padding: 4px 6px;
       border-radius: 4px;
       transition: all 0.12s ease;
-      white-space: nowrap;
     }
     .resume-label:hover {
       background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.4));
-    }
-    .resume-label span {
-      display: none;
     }
     .resume-checkbox {
       width: 14px;
@@ -818,6 +838,12 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       cursor: pointer;
       accent-color: var(--vscode-focusBorder, #007acc);
       margin: 0;
+    }
+    .resume-icon {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+      opacity: 0.8;
     }
     .add-terminal-btn {
       display: flex;
@@ -860,9 +886,6 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     @media (min-width: 350px) {
       .control-panel {
         gap: 10px;
-      }
-      .resume-label span {
-        display: inline;
       }
     }
     @media (min-width: 450px) {
@@ -1179,9 +1202,9 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         <button class="tab-button active" data-tab-id="1">
           <span class="tab-label">Tab 1</span>
           <span class="tab-activity"></span>
-          <button class="tab-close" title="Close tab">
+          <span class="tab-close" title="Close tab">
             <svg viewBox="0 0 16 16"><path d="M8 8.707l3.646 3.647.708-.707L8.707 8l3.647-3.646-.707-.708L8 7.293 4.354 3.646l-.707.708L7.293 8l-3.646 3.646.707.708L8 8.707z"/></svg>
-          </button>
+          </span>
         </button>
         <button class="add-tab-btn" id="add-tab-btn" title="New tab">
           <svg viewBox="0 0 16 16"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg>
@@ -1195,7 +1218,7 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       </div>
       <label class="resume-label" id="global-resume-label" title="Resume previous Claude session">
         <input type="checkbox" class="resume-checkbox" id="global-resume">
-        <span>Resume session</span>
+        <svg class="resume-icon" viewBox="0 0 16 16"><path d="M3 3l5 5-5 5V3z"/><path d="M9 3l5 5-5 5V3z"/></svg>
       </label>
       <div class="control-panel-divider"></div>
       <button class="add-terminal-btn" id="add-terminal-btn" title="Add terminal with selected project" disabled>
@@ -1219,6 +1242,9 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
               <button class="action-btn fullscreen-btn" id="fullscreen-1-0" title="Toggle fullscreen">
                 <svg class="expand-icon" viewBox="0 0 16 16"><path d="M3 3v4h1V4h3V3H3zm10 0h-4v1h3v3h1V3zM4 12v-3H3v4h4v-1H4zm8-3v3h-3v1h4V9h-1z"/></svg>
                 <svg class="collapse-icon" style="display:none" viewBox="0 0 16 16"><path d="M2 2h5v5H2V2zm1 1v3h3V3H3zm7-1h5v5h-5V2zm1 1v3h3V3h-3zM2 9h5v5H2V9zm1 1v3h3v-3H3zm7-1h5v5h-5V9zm1 1v3h3v-3h-3z"/></svg>
+              </button>
+              <button class="action-btn restart-btn" id="restart-1-0" title="Restart terminal">
+                <svg viewBox="0 0 16 16"><path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 1 1 .908-.418A6 6 0 1 1 8 2v1z"/><path d="M8 1v3.5a.5.5 0 0 0 .854.354l1.5-1.5a.5.5 0 0 0-.708-.708L8.5 3.793V1a.5.5 0 0 0-1 0z"/></svg>
               </button>
               <button class="action-btn kill-btn" id="kill-1-0" title="Kill terminal">
                 <svg viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
@@ -1247,6 +1273,9 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
                 <svg class="expand-icon" viewBox="0 0 16 16"><path d="M3 3v4h1V4h3V3H3zm10 0h-4v1h3v3h1V3zM4 12v-3H3v4h4v-1H4zm8-3v3h-3v1h4V9h-1z"/></svg>
                 <svg class="collapse-icon" style="display:none" viewBox="0 0 16 16"><path d="M2 2h5v5H2V2zm1 1v3h3V3H3zm7-1h5v5h-5V2zm1 1v3h3V3h-3zM2 9h5v5H2V9zm1 1v3h3v-3H3zm7-1h5v5h-5V9zm1 1v3h3v-3h-3z"/></svg>
               </button>
+              <button class="action-btn restart-btn" id="restart-1-1" title="Restart terminal">
+                <svg viewBox="0 0 16 16"><path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 1 1 .908-.418A6 6 0 1 1 8 2v1z"/><path d="M8 1v3.5a.5.5 0 0 0 .854.354l1.5-1.5a.5.5 0 0 0-.708-.708L8.5 3.793V1a.5.5 0 0 0-1 0z"/></svg>
+              </button>
               <button class="action-btn kill-btn" id="kill-1-1" title="Kill terminal">
                 <svg viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
               </button>
@@ -1274,6 +1303,9 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
                 <svg class="expand-icon" viewBox="0 0 16 16"><path d="M3 3v4h1V4h3V3H3zm10 0h-4v1h3v3h1V3zM4 12v-3H3v4h4v-1H4zm8-3v3h-3v1h4V9h-1z"/></svg>
                 <svg class="collapse-icon" style="display:none" viewBox="0 0 16 16"><path d="M2 2h5v5H2V2zm1 1v3h3V3H3zm7-1h5v5h-5V2zm1 1v3h3V3h-3zM2 9h5v5H2V9zm1 1v3h3v-3H3zm7-1h5v5h-5V9zm1 1v3h3v-3h-3z"/></svg>
               </button>
+              <button class="action-btn restart-btn" id="restart-1-2" title="Restart terminal">
+                <svg viewBox="0 0 16 16"><path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 1 1 .908-.418A6 6 0 1 1 8 2v1z"/><path d="M8 1v3.5a.5.5 0 0 0 .854.354l1.5-1.5a.5.5 0 0 0-.708-.708L8.5 3.793V1a.5.5 0 0 0-1 0z"/></svg>
+              </button>
               <button class="action-btn kill-btn" id="kill-1-2" title="Kill terminal">
                 <svg viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
               </button>
@@ -1300,6 +1332,9 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
               <button class="action-btn fullscreen-btn" id="fullscreen-1-3" title="Toggle fullscreen">
                 <svg class="expand-icon" viewBox="0 0 16 16"><path d="M3 3v4h1V4h3V3H3zm10 0h-4v1h3v3h1V3zM4 12v-3H3v4h4v-1H4zm8-3v3h-3v1h4V9h-1z"/></svg>
                 <svg class="collapse-icon" style="display:none" viewBox="0 0 16 16"><path d="M2 2h5v5H2V2zm1 1v3h3V3H3zm7-1h5v5h-5V2zm1 1v3h3V3h-3zM2 9h5v5H2V9zm1 1v3h3v-3H3zm7-1h5v5h-5V9zm1 1v3h3v-3h-3z"/></svg>
+              </button>
+              <button class="action-btn restart-btn" id="restart-1-3" title="Restart terminal">
+                <svg viewBox="0 0 16 16"><path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 1 1 .908-.418A6 6 0 1 1 8 2v1z"/><path d="M8 1v3.5a.5.5 0 0 0 .854.354l1.5-1.5a.5.5 0 0 0-.708-.708L8.5 3.793V1a.5.5 0 0 0-1 0z"/></svg>
               </button>
               <button class="action-btn kill-btn" id="kill-1-3" title="Kill terminal">
                 <svg viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
@@ -1407,6 +1442,17 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         pickFilesBtn.addEventListener('click', function() {
           vscode.postMessage({
             command: 'pickFiles',
+            tabId: tabId,
+            terminalId: terminalId
+          });
+        });
+      }
+
+      const restartBtn = document.getElementById('restart-' + tabId + '-' + terminalId);
+      if (restartBtn) {
+        restartBtn.addEventListener('click', function() {
+          vscode.postMessage({
+            command: 'restart',
             tabId: tabId,
             terminalId: terminalId
           });
@@ -1590,7 +1636,7 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       var tabBtn = document.createElement('button');
       tabBtn.className = 'tab-button';
       tabBtn.dataset.tabId = tabId;
-      tabBtn.innerHTML = '<span class="tab-label">Tab ' + tabId + '</span><span class="tab-activity"></span><button class="tab-close" title="Close tab"><svg viewBox="0 0 16 16"><path d="M8 8.707l3.646 3.647.708-.707L8.707 8l3.647-3.646-.707-.708L8 7.293 4.354 3.646l-.707.708L7.293 8l-3.646 3.646.707.708L8 8.707z"/></svg></button>';
+      tabBtn.innerHTML = '<span class="tab-label">Tab ' + tabId + '</span><span class="tab-activity"></span><span class="tab-close" title="Close tab"><svg viewBox="0 0 16 16"><path d="M8 8.707l3.646 3.647.708-.707L8.707 8l3.647-3.646-.707-.708L8 7.293 4.354 3.646l-.707.708L7.293 8l-3.646 3.646.707.708L8 8.707z"/></svg></span>';
       tabBar.insertBefore(tabBtn, addTabBtn);
 
       // Create grid for this tab
@@ -1606,8 +1652,8 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       // Attach event listeners
       attachTabButtonListeners(tabBtn);
 
-      // Switch to new tab
-      switchTab(tabId);
+      // Switch to new tab (UI only, extension already knows)
+      switchTabUI(tabId);
     }
 
     function createGridForTab(tabId) {
@@ -1620,14 +1666,14 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         const container = document.createElement('div');
         container.className = i === 0 ? 'terminal-container' : 'terminal-container hidden-slot';
         container.id = 'term-container-' + tabId + '-' + i;
-        container.innerHTML = '<div class="terminal-header"><span class="terminal-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span><span class="terminal-title empty" id="terminal-title-' + tabId + '-' + i + '">Terminal ' + (i + 1) + '</span><div class="header-actions"><button class="action-btn pick-files-btn" id="pick-files-' + tabId + '-' + i + '" title="Insert file path"><svg viewBox="0 0 16 16"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v.64c.57.265.94.876.856 1.546l-.64 5.124A2.5 2.5 0 0 1 12.733 15H3.266a2.5 2.5 0 0 1-2.481-2.19l-.64-5.124A1.5 1.5 0 0 1 1 6.14V3.5zM2 6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3H2.5a.5.5 0 0 0-.5.5V6z"/></svg></button><button class="action-btn fullscreen-btn" id="fullscreen-' + tabId + '-' + i + '" title="Toggle fullscreen"><svg class="expand-icon" viewBox="0 0 16 16"><path d="M3 3v4h1V4h3V3H3zm10 0h-4v1h3v3h1V3zM4 12v-3H3v4h4v-1H4zm8-3v3h-3v1h4V9h-1z"/></svg><svg class="collapse-icon" style="display:none" viewBox="0 0 16 16"><path d="M2 2h5v5H2V2zm1 1v3h3V3H3zm7-1h5v5h-5V2zm1 1v3h3V3h-3zM2 9h5v5H2V9zm1 1v3h3v-3H3zm7-1h5v5h-5V9zm1 1v3h3v-3h-3z"/></svg></button><button class="action-btn kill-btn" id="kill-' + tabId + '-' + i + '" title="Kill terminal"><svg viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg></button></div><span class="status-indicator" id="status-' + tabId + '-' + i + '"></span></div><div class="terminal-wrapper"><div id="terminal-' + tabId + '-' + i + '"><div class="terminal-placeholder"><span class="terminal-placeholder-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span><span class="terminal-placeholder-text">Select a project and click "Add Terminal"</span></div></div></div>';
+        container.innerHTML = '<div class="terminal-header"><span class="terminal-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span><span class="terminal-title empty" id="terminal-title-' + tabId + '-' + i + '">Terminal ' + (i + 1) + '</span><div class="header-actions"><button class="action-btn pick-files-btn" id="pick-files-' + tabId + '-' + i + '" title="Insert file path"><svg viewBox="0 0 16 16"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v.64c.57.265.94.876.856 1.546l-.64 5.124A2.5 2.5 0 0 1 12.733 15H3.266a2.5 2.5 0 0 1-2.481-2.19l-.64-5.124A1.5 1.5 0 0 1 1 6.14V3.5zM2 6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3H2.5a.5.5 0 0 0-.5.5V6z"/></svg></button><button class="action-btn fullscreen-btn" id="fullscreen-' + tabId + '-' + i + '" title="Toggle fullscreen"><svg class="expand-icon" viewBox="0 0 16 16"><path d="M3 3v4h1V4h3V3H3zm10 0h-4v1h3v3h1V3zM4 12v-3H3v4h4v-1H4zm8-3v3h-3v1h4V9h-1z"/></svg><svg class="collapse-icon" style="display:none" viewBox="0 0 16 16"><path d="M2 2h5v5H2V2zm1 1v3h3V3H3zm7-1h5v5h-5V2zm1 1v3h3V3h-3zM2 9h5v5H2V9zm1 1v3h3v-3H3zm7-1h5v5h-5V9zm1 1v3h3v-3h-3z"/></svg></button><button class="action-btn restart-btn" id="restart-' + tabId + '-' + i + '" title="Restart terminal"><svg viewBox="0 0 16 16"><path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 1 1 .908-.418A6 6 0 1 1 8 2v1z"/><path d="M8 1v3.5a.5.5 0 0 0 .854.354l1.5-1.5a.5.5 0 0 0-.708-.708L8.5 3.793V1a.5.5 0 0 0-1 0z"/></svg></button><button class="action-btn kill-btn" id="kill-' + tabId + '-' + i + '" title="Kill terminal"><svg viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg></button></div><span class="status-indicator" id="status-' + tabId + '-' + i + '"></span></div><div class="terminal-wrapper"><div id="terminal-' + tabId + '-' + i + '"><div class="terminal-placeholder"><span class="terminal-placeholder-icon"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-9zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/><path d="M2 5l4 3-4 3V5zm5 3h7v1H7V8z"/></svg></span><span class="terminal-placeholder-text">Select a project and click "Add Terminal"</span></div></div></div>';
         grid.appendChild(container);
       }
 
       return grid;
     }
 
-    function switchTab(tabId) {
+    function switchTabUI(tabId) {
       if (!tabState[tabId]) return;
 
       activeTabId = tabId;
@@ -1651,7 +1697,10 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
 
       // Refit terminals
       setTimeout(fitAll, 50);
+    }
 
+    function switchTab(tabId) {
+      switchTabUI(tabId);
       vscode.postMessage({ command: 'switchTab', tabId: tabId });
     }
 
@@ -2415,11 +2464,11 @@ class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
         case 'tabClosed':
           removeTab(message.tabId);
           if (message.newActiveTabId) {
-            switchTab(message.newActiveTabId);
+            switchTabUI(message.newActiveTabId);
           }
           break;
         case 'tabSwitched':
-          switchTab(message.tabId);
+          switchTabUI(message.tabId);
           break;
       }
     });
