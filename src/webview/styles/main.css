@@ -143,11 +143,16 @@ html, body {
   display: none;
 }
 .project-select {
+  appearance: none;
+  -webkit-appearance: none;
   background: var(--vscode-input-background, #3c3c3c);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%23888' d='M4.5 5.5L8 9l3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
   color: var(--vscode-input-foreground, #ccc);
   border: 1px solid var(--vscode-input-border, transparent);
   border-radius: 4px;
-  padding: 5px 8px;
+  padding: 5px 28px 5px 8px;
   font-size: 12px;
   font-family: inherit;
   cursor: pointer;
@@ -223,28 +228,11 @@ html, body {
   height: 16px;
   fill: currentColor;
 }
-.add-terminal-btn span {
-  display: none;
-}
-.terminal-count {
-  font-size: 11px;
-  color: var(--vscode-descriptionForeground, #888);
-  flex-shrink: 0;
-}
 
 /* Wider panel - show labels */
 @media (min-width: 350px) {
   .control-panel {
     gap: 10px;
-  }
-}
-@media (min-width: 450px) {
-  .add-terminal-btn {
-    gap: 6px;
-    padding: 4px 10px;
-  }
-  .add-terminal-btn span {
-    display: inline;
   }
 }
 

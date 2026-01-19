@@ -255,11 +255,6 @@ for (var i = 0; i < 4; i++) {
 let currentFullscreen = -1;
 // visibleTerminalCount is now per-tab in tabState
 
-function updateTerminalCount() {
-  const tab = getActiveTab();
-  document.getElementById('terminal-count').textContent = (tab ? tab.visibleTerminalCount : 1) + ' / 4';
-}
-
 function createTab(tabId) {
   tabState[tabId] = {
     terminals: [],
@@ -332,11 +327,8 @@ function switchTabUI(tabId) {
   const activeBtn = document.querySelector('.tab-button[data-tab-id="' + tabId + '"]');
   if (activeBtn) activeBtn.classList.remove('has-activity');
 
-  // Update terminal count for this tab
-  updateTerminalCount();
-
-  // Refit terminals
-  setTimeout(fitAll, 50);
+  // Refit terminals (wait for layout to stabilize)
+  setTimeout(fitAll, 200);
 }
 
 function switchTab(tabId) {
@@ -395,11 +387,8 @@ function updateGridLayout() {
   // Update add button state
   updateAddButtonState();
 
-  // Update terminal count display
-  updateTerminalCount();
-
-  // Refit terminals after layout change
-  setTimeout(fitAll, 50);
+  // Refit terminals after layout change (wait for 150ms CSS transition to complete)
+  setTimeout(fitAll, 200);
 }
 
 function removeTerminalSlot(terminalId) {
@@ -587,8 +576,8 @@ function toggleFullscreen(terminalId) {
     currentFullscreen = terminalId;
   }
 
-  // Refit terminals after layout change
-  setTimeout(fitAll, 50);
+  // Refit terminals after layout change (wait for CSS transition to complete)
+  setTimeout(fitAll, 200);
 }
 
 function initializeTerminal(i) {
@@ -913,6 +902,10 @@ function fitAll() {
   tab.fitAddons.forEach(function(addon, i) {
     if (addon && tab.terminalInitialized[i]) {
       try {
+        var term = tab.terminals[i];
+        // Save scroll state BEFORE fitting (fit can reset scroll position)
+        var wasAtBottom = term ? term.buffer.active.viewportY >= term.buffer.active.baseY : false;
+
         addon.fit();
         var dims = addon.proposeDimensions();
         if (dims) {
@@ -924,22 +917,26 @@ function fitAll() {
             rows: dims.rows
           });
         }
+        // Restore scroll position after fitting
+        if (term && wasAtBottom) {
+          term.scrollToBottom();
+        }
       } catch (e) {}
     }
   });
 }
 
-// Fit on resize
+// Fit on resize - use 200ms delay to wait for CSS transitions (150ms) to complete
 let resizeTimeout;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimeout);
-  resizeTimeout = setTimeout(fitAll, 50);
+  resizeTimeout = setTimeout(fitAll, 200);
 });
 
 // ResizeObserver for more reliable resize detection
 const resizeObserver = new ResizeObserver(() => {
   clearTimeout(resizeTimeout);
-  resizeTimeout = setTimeout(fitAll, 50);
+  resizeTimeout = setTimeout(fitAll, 200);
 });
 document.querySelectorAll('.terminal-wrapper').forEach(el => {
   resizeObserver.observe(el);
@@ -967,11 +964,12 @@ window.addEventListener('message', function(event) {
         var outTerm = msgTab.terminals[message.terminalId];
         // Check if user is at bottom before writing
         var isAtBottom = outTerm.buffer.active.viewportY >= outTerm.buffer.active.baseY;
-        outTerm.write(message.data);
-        // Only auto-scroll if user was already at bottom
-        if (isAtBottom) {
-          outTerm.scrollToBottom();
-        }
+        outTerm.write(message.data, function() {
+          // Only auto-scroll if user was already at bottom, use callback to ensure write completes
+          if (isAtBottom) {
+            outTerm.scrollToBottom();
+          }
+        });
         // Restore saved title after restart
         if (msgTab.savedTitles && msgTab.savedTitles[message.terminalId]) {
           var titleEl = document.getElementById('terminal-title-' + msgTabId + '-' + message.terminalId);
