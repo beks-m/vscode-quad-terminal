@@ -11,7 +11,7 @@ npm install
 # Rebuild node-pty for VS Code's Electron version (required after npm install)
 npx @electron/rebuild -f -w node-pty -v 32.0.0
 
-# Compile TypeScript
+# Compile TypeScript and copy webview files
 npm run compile
 
 # Watch mode (auto-recompile on changes)
@@ -27,62 +27,124 @@ Press `F5` in VS Code to launch the Extension Development Host with the extensio
 
 ## Architecture
 
-This is a VS Code extension that provides a dynamic terminal grid (1-4 terminals) for running Claude CLI sessions.
+This is a VS Code extension that provides a dynamic terminal grid (1-4 terminals per tab) for running Claude CLI sessions.
 
-### Single-File Structure
+### Directory Structure
 
-The entire extension lives in `src/extension.ts`:
+```
+src/
+├── extension.ts                    # Entry point (minimal)
+├── constants.ts                    # Shared constants
+├── types/
+│   ├── index.ts                    # Re-exports
+│   ├── state.ts                    # TabState, TerminalConfig, Project
+│   └── messages.ts                 # Type-safe message definitions
+├── provider/
+│   ├── index.ts                    # QuadTerminalViewProvider (orchestrator)
+│   ├── terminal-manager.ts         # PTY lifecycle, I/O, status
+│   ├── tab-manager.ts              # Tab state management
+│   ├── config-service.ts           # Terminal config, projects
+│   ├── file-operations.ts          # Drop resolution, file picker
+│   ├── webview-messenger.ts        # Type-safe message sending
+│   └── webview-html.ts             # HTML generation from templates
+└── webview/
+    ├── index.html                  # HTML template
+    ├── styles/
+    │   └── main.css                # All CSS styles
+    └── scripts/
+        └── main.js                 # Webview JavaScript
+```
 
-- **Extension Entry**: `activate()` registers the webview provider and commands
-- **QuadTerminalViewProvider**: Main class that manages up to 4 terminals
-  - Creates PTY processes using `node-pty` for real terminal emulation
-  - Renders terminals using xterm.js loaded via CDN in the webview
-  - Handles bidirectional communication: webview <-> extension <-> PTY
-- **Webview HTML**: Generated inline by `_getHtmlForWebview()` - contains all HTML, CSS, and JavaScript
+### Module Responsibilities
+
+| Module | Responsibility |
+|--------|---------------|
+| `extension.ts` | Entry point, registers provider and commands |
+| `constants.ts` | TERMINAL_COUNT, timeouts, validation |
+| `types/` | TypeScript interfaces for state and messages |
+| `provider/index.ts` | Orchestrates all modules, handles messages |
+| `terminal-manager.ts` | PTY create/destroy, I/O, busy/idle status |
+| `tab-manager.ts` | Tab state (Map<tabId, TabState>), switching |
+| `config-service.ts` | Reads VS Code config, builds terminal theme |
+| `file-operations.ts` | Resolve drops, open files, file picker |
+| `webview-messenger.ts` | Type-safe postMessage wrapper |
+| `webview-html.ts` | Loads and assembles HTML from files |
+
+### Type-Safe Message Protocol
+
+Messages between extension and webview use discriminated unions:
+
+```typescript
+// Webview → Extension
+type WebviewToExtensionMessage =
+  | { command: 'ready' }
+  | { command: 'selectProject'; tabId: number; terminalId: number; ... }
+  | { command: 'input'; tabId: number; terminalId: number; data: string }
+  | ...
+
+// Extension → Webview
+type ExtensionToWebviewMessage =
+  | { command: 'projects'; projects: Project[] }
+  | { command: 'output'; tabId: number; terminalId: number; data: string }
+  | { command: 'status'; tabId: number; terminalId: number; status: 'busy' | 'idle' }
+  | ...
+```
 
 ### UI Structure
 
 The webview consists of:
 
-1. **Control Panel** (top bar):
-   - Global project selector dropdown
+1. **Tab Bar**: Multiple tabs, each with its own terminal grid
+2. **Control Panel** (top bar):
+   - Tab buttons with activity indicators
+   - Project selector dropdown
    - Resume session checkbox
-   - "Add Terminal" button (disabled until project is selected)
+   - "Add Terminal" button
    - Terminal count display (e.g., "2 / 4")
 
-2. **Terminal Grid** (main area):
+3. **Terminal Grid** (main area):
    - Starts with 1 terminal taking full space
    - 2 terminals: vertical stack layout
    - 3-4 terminals: 2x2 grid layout
-   - Each terminal has a header with title, fullscreen toggle, and kill button
+   - Each terminal has a header with title, fullscreen toggle, restart, and kill buttons
 
 ### Key Data Flows
 
-1. **Adding Terminals**: User selects project in global dropdown → clicks "Add Terminal" → webview finds empty slot or adds new terminal → sends `selectProject` message → extension spawns PTY in that directory → auto-runs `claude --dangerously-skip-permissions`
-2. **Terminal I/O**: PTY output → `onData` handler → postMessage to webview → xterm.write(); User input → xterm.onData → postMessage → pty.write()
-3. **Status Tracking**: PTY output triggers busy state (yellow pulse) → idle timer (2s) resets to idle (green) when output stops
-4. **Drag and Drop**: Files dragged into terminal → extract paths from `text/uri-list` or `text/plain` → send as terminal input
-5. **Fullscreen Mode**: Toggle button → uses absolute positioning to expand terminal over grid
+1. **Adding Terminals**: User selects project → clicks "Add Terminal" → webview sends `selectProject` → extension spawns PTY → auto-runs `claude --dangerously-skip-permissions`
+2. **Terminal I/O**: PTY output → `TerminalManager.sendOutput()` → webview `xterm.write()`; User input → `xterm.onData` → extension `pty.write()`
+3. **Status Tracking**: PTY output triggers busy state → idle timer (2s) transitions to idle
+4. **Tab Management**: Each tab has independent terminal state (up to 4 terminals per tab)
+5. **Drag and Drop**: Files dragged into terminal → resolved to paths → sent as terminal input
 
-### Terminal State Maps
+### Tab State Structure
 
-The provider maintains several `Map<number, T>` structures keyed by terminal ID (0-3):
-- `ptyProcesses`: Active PTY instances
-- `terminalProjects`: Current working directory paths
-- `idleTimers`: Timers for busy/idle status transitions
-- `terminalBusy`: Current busy state
-- `claudeCommandTimeouts`: Pending claude command execution timers
+```typescript
+interface TabState {
+  ptyProcesses: Map<number, pty.IPty>;      // Terminal ID → PTY
+  terminalProjects: Map<number, string>;     // Terminal ID → project path
+  idleTimers: Map<number, NodeJS.Timeout>;   // Terminal ID → idle timer
+  terminalBusy: Map<number, boolean>;        // Terminal ID → busy state
+  claudeCommandTimeouts: Map<number, NodeJS.Timeout>;
+}
+```
 
-### Frontend State (Webview JavaScript)
+### Webview State (main.js)
 
-- `visibleTerminalCount`: Number of visible terminal slots (1-4)
-- `terminalProjects[]`: Array tracking which terminals have active projects
-- `terminalInitialized[]`: Array tracking which terminals have xterm instances
-- `terminals[]`: Array of xterm.js Terminal instances
-- `fitAddons[]`: Array of FitAddon instances for terminal resizing
+```javascript
+const tabState = {
+  [tabId]: {
+    terminals: [],              // xterm.js Terminal instances
+    fitAddons: [],              // FitAddon instances
+    terminalInitialized: [],    // Which terminals have xterm
+    terminalProjects: [],       // Project paths
+    visibleTerminalCount: 1     // Number of visible slots
+  }
+};
+```
 
-### Webview-Extension Communication
+### Adding New Message Types
 
-Messages use a simple `{command: string, ...data}` format. Key commands:
-- Extension → Webview: `projects`, `terminalConfig`, `output`, `clear`, `killed`, `status`, `refresh`
-- Webview → Extension: `ready`, `selectProject`, `input`, `resize`, `kill`
+1. Add to `src/types/messages.ts`
+2. Add handler in `provider/index.ts` `handleMessage()`
+3. Add sender method in `webview-messenger.ts` if extension→webview
+4. Add case in `main.js` message listener if needed
