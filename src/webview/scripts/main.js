@@ -392,9 +392,6 @@ function updateGridLayout() {
   }
   // For 3-4 terminals, use default 2x2 grid (no extra class needed)
 
-  // Update add button state
-  updateAddButtonState();
-
   // Refit terminals after layout change (wait for 150ms CSS transition to complete)
   setTimeout(fitAll, 200);
 }
@@ -487,14 +484,7 @@ function startTerminalWithProject(terminalId, projectPath, projectName, sessionI
   vscode.postMessage(message);
 }
 
-function updateAddButtonState() {
-  const globalSelect = document.getElementById('global-project-select');
-  const addBtn = document.getElementById('add-terminal-btn');
-  const hasProject = globalSelect.value !== '';
-  addBtn.disabled = !hasProject || !hasAvailableSlot();
-}
-
-// Update button state and fetch sessions when project selection changes
+// Update and fetch sessions when project selection changes
 document.getElementById('global-project-select').addEventListener('change', function() {
   var projectPath = this.value;
 
@@ -524,8 +514,6 @@ document.getElementById('global-project-select').addEventListener('change', func
   } else {
     closeSessionPanel();
   }
-
-  updateAddButtonState();
 });
 
 // New session item click handler
@@ -539,8 +527,7 @@ if (newSessionEl) {
 // Close session panel when clicking outside
 document.addEventListener('click', function(e) {
   var wrapper = document.getElementById('project-selector-wrapper');
-  var addBtn = document.getElementById('add-terminal-btn');
-  if (wrapper && sessionPanelOpen && !wrapper.contains(e.target) && e.target !== addBtn) {
+  if (wrapper && sessionPanelOpen && !wrapper.contains(e.target)) {
     closeSessionPanel();
   }
 });
@@ -597,9 +584,6 @@ function addTerminal() {
     startTerminalWithProject(tid, projectPath, projectName, sessionId);
   }, 100);
 }
-
-// Add terminal button event listener
-document.getElementById('add-terminal-btn').addEventListener('click', addTerminal);
 
 function toggleFullscreen(terminalId) {
   var grid = document.querySelector('.grid[data-tab-id="' + activeTabId + '"]');
@@ -1350,9 +1334,6 @@ function updateProjectSelectors(projects) {
   if (currentValue) {
     select.value = currentValue;
   }
-
-  // Update add button state based on selection
-  updateAddButtonState();
 }
 
 // Session panel functions
@@ -1388,7 +1369,9 @@ function selectSession(session) {
   }
 
   closeSessionPanel();
-  updateAddButtonState();
+
+  // Automatically start terminal with selected session
+  addTerminal();
 }
 
 function renderSessions(sessions) {
