@@ -21,7 +21,7 @@ export class TerminalManager {
     tabId: number,
     terminalId: number,
     projectPath: string,
-    resume: boolean = false
+    sessionId?: string
   ): void {
     const tabState = this.tabManager.getTabState(tabId);
     if (!tabState) return;
@@ -71,9 +71,12 @@ export class TerminalManager {
       // Auto-run claude after shell init
       const timeout = setTimeout(() => {
         if (tabState.ptyProcesses.has(terminalId)) {
-          const claudeCmd = resume
-            ? 'claude --dangerously-skip-permissions --resume\r'
-            : 'claude --dangerously-skip-permissions\r';
+          let claudeCmd: string;
+          if (sessionId) {
+            claudeCmd = `claude --dangerously-skip-permissions --resume ${sessionId}\r`;
+          } else {
+            claudeCmd = 'claude --dangerously-skip-permissions\r';
+          }
           ptyProcess.write(claudeCmd);
         }
         tabState.claudeCommandTimeouts.delete(terminalId);
@@ -179,8 +182,7 @@ export class TerminalManager {
 
     // Restart with the same project after a short delay
     setTimeout(() => {
-      const resume = false; // Don't resume on restart
-      this.startTerminal(tabId, terminalId, projectPath, resume);
+      this.startTerminal(tabId, terminalId, projectPath);
     }, 100);
   }
 

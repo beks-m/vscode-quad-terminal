@@ -102,7 +102,7 @@ export class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
             tabId,
             message.terminalId,
             message.projectPath,
-            message.resume
+            message.sessionId
           );
         }
         break;
