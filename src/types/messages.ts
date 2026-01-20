@@ -1,4 +1,4 @@
-import { Project, TerminalConfig, TerminalStatus } from './state';
+import { Project, TerminalConfig, TerminalStatus, Session } from './state';
 
 // ============================================
 // Webview -> Extension Messages
@@ -14,6 +14,7 @@ export interface SelectProjectMessage {
   terminalId: number;
   projectPath: string;
   resume: boolean;
+  sessionId?: string; // Optional: specific session to resume
 }
 
 export interface InputMessage {
@@ -92,6 +93,11 @@ export interface CloseTabMessage {
   tabId: number;
 }
 
+export interface GetSessionsMessage {
+  command: 'getSessions';
+  projectPath: string;
+}
+
 /** All messages that can be sent from webview to extension */
 export type WebviewToExtensionMessage =
   | ReadyMessage
@@ -106,7 +112,8 @@ export type WebviewToExtensionMessage =
   | PickFilesMessage
   | CreateTabMessage
   | SwitchTabMessage
-  | CloseTabMessage;
+  | CloseTabMessage
+  | GetSessionsMessage;
 
 // ============================================
 // Extension -> Webview Messages
@@ -188,6 +195,12 @@ export interface RestartingMessage {
   terminalId: number;
 }
 
+export interface SessionsMessage {
+  command: 'sessions';
+  projectPath: string;
+  sessions: Session[];
+}
+
 /** All messages that can be sent from extension to webview */
 export type ExtensionToWebviewMessage =
   | ProjectsMessage
@@ -202,4 +215,5 @@ export type ExtensionToWebviewMessage =
   | TabCreatedMessage
   | TabClosedMessage
   | TabSwitchedMessage
-  | RestartingMessage;
+  | RestartingMessage
+  | SessionsMessage;
