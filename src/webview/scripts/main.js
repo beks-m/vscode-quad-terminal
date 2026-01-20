@@ -13,6 +13,11 @@ const tabState = {
 let activeTabId = 1;
 let nextTabId = 2;
 
+// Session selection state
+let selectedSession = { type: 'new' }; // { type: 'new' } or { type: 'resume', sessionId: string }
+let currentSessions = [];
+let sessionPanelOpen = false;
+
 // Helper to get current tab state
 function getActiveTab() {
   return tabState[activeTabId];
@@ -284,6 +289,9 @@ function createTab(tabId) {
     setupTerminalEventListeners(tabId, i);
   }
 
+  // Observe new terminal wrappers for resize
+  observeTerminalWrappers();
+
   // Attach event listeners
   attachTabButtonListeners(tabBtn);
 
@@ -445,7 +453,7 @@ function hasAvailableSlot() {
   return false;
 }
 
-function startTerminalWithProject(terminalId, projectPath, projectName, resume) {
+function startTerminalWithProject(terminalId, projectPath, projectName, sessionId) {
   var tab = getActiveTab();
   if (!tab) return;
 
@@ -467,13 +475,16 @@ function startTerminalWithProject(terminalId, projectPath, projectName, resume) 
   if (statusEl) statusEl.classList.add('active');
 
   // Send message to extension to start the terminal
-  vscode.postMessage({
+  var message = {
     command: 'selectProject',
     tabId: activeTabId,
     terminalId: terminalId,
-    projectPath: projectPath,
-    resume: resume
-  });
+    projectPath: projectPath
+  };
+  if (sessionId) {
+    message.sessionId = sessionId;
+  }
+  vscode.postMessage(message);
 }
 
 function updateAddButtonState() {
@@ -483,8 +494,56 @@ function updateAddButtonState() {
   addBtn.disabled = !hasProject || !hasAvailableSlot();
 }
 
-// Update button state when project selection changes
-document.getElementById('global-project-select').addEventListener('change', updateAddButtonState);
+// Update button state and fetch sessions when project selection changes
+document.getElementById('global-project-select').addEventListener('change', function() {
+  var projectPath = this.value;
+
+  // Reset session selection
+  selectedSession = { type: 'new' };
+  document.querySelectorAll('.session-item').forEach(function(item) {
+    item.classList.remove('selected');
+  });
+  var newSessionItem = document.getElementById('new-session-item');
+  if (newSessionItem) newSessionItem.classList.add('selected');
+
+  if (projectPath) {
+    // Show loading state
+    var sessionList = document.getElementById('session-list');
+    if (sessionList) {
+      sessionList.innerHTML = '<div class="session-loading">Loading sessions...</div>';
+    }
+
+    // Request sessions from extension
+    vscode.postMessage({
+      command: 'getSessions',
+      projectPath: projectPath
+    });
+
+    // Open the session panel
+    openSessionPanel();
+  } else {
+    closeSessionPanel();
+  }
+
+  updateAddButtonState();
+});
+
+// New session item click handler
+var newSessionEl = document.getElementById('new-session-item');
+if (newSessionEl) {
+  newSessionEl.addEventListener('click', function() {
+    selectSession({ type: 'new' });
+  });
+}
+
+// Close session panel when clicking outside
+document.addEventListener('click', function(e) {
+  var wrapper = document.getElementById('project-selector-wrapper');
+  var addBtn = document.getElementById('add-terminal-btn');
+  if (wrapper && sessionPanelOpen && !wrapper.contains(e.target) && e.target !== addBtn) {
+    closeSessionPanel();
+  }
+});
 
 function addTerminal() {
   var tab = getActiveTab();
@@ -493,7 +552,7 @@ function addTerminal() {
   var globalSelect = document.getElementById('global-project-select');
   var projectPath = globalSelect.value;
   var projectName = globalSelect.options[globalSelect.selectedIndex] ? globalSelect.options[globalSelect.selectedIndex].text : '';
-  var resume = document.getElementById('global-resume').checked;
+  var sessionId = selectedSession.type === 'resume' ? selectedSession.sessionId : null;
 
   // Require a project to be selected
   if (!projectPath) {
@@ -535,7 +594,7 @@ function addTerminal() {
   // Delay terminal start to allow layout to settle
   var tid = targetTerminalId;
   setTimeout(function() {
-    startTerminalWithProject(tid, projectPath, projectName, resume);
+    startTerminalWithProject(tid, projectPath, projectName, sessionId);
   }, 100);
 }
 
@@ -602,8 +661,7 @@ function initializeTerminal(i) {
     scrollback: 10000,
     allowProposedApi: true,
     disableStdin: false,
-    cursorStyle: 'block',
-    lineHeight: 1.2
+    cursorStyle: 'block'
   });
 
   var fitAddon = new FitAddon.FitAddon();
@@ -866,8 +924,8 @@ function initializeTerminal(i) {
     });
   });
 
-  // Fit after initialization - multiple attempts to handle layout timing
-  var doFit = function() {
+  // Fit after initialization
+  setTimeout(function() {
     fitAddon.fit();
     var dims = fitAddon.proposeDimensions();
     if (dims) {
@@ -879,33 +937,18 @@ function initializeTerminal(i) {
         rows: dims.rows
       });
     }
-  };
-
-  // Initial fit after short delay
-  setTimeout(function() {
-    doFit();
     term.focus();
-  }, 50);
-
-  // Second fit to catch any layout changes
-  setTimeout(doFit, 150);
-
-  // Third fit for good measure
-  setTimeout(doFit, 300);
+  }, 100);
 }
 
-// Fit all initialized terminals
+// Fit all initialized terminals - simple and direct
 function fitAll() {
   var tab = getActiveTab();
   if (!tab) return;
 
   tab.fitAddons.forEach(function(addon, i) {
-    if (addon && tab.terminalInitialized[i]) {
+    if (addon && tab.terminalInitialized[i] && tab.terminals[i]) {
       try {
-        var term = tab.terminals[i];
-        // Save scroll state BEFORE fitting (fit can reset scroll position)
-        var wasAtBottom = term ? term.buffer.active.viewportY >= term.buffer.active.baseY : false;
-
         addon.fit();
         var dims = addon.proposeDimensions();
         if (dims) {
@@ -917,33 +960,79 @@ function fitAll() {
             rows: dims.rows
           });
         }
-        // Restore scroll position after fitting
-        if (term && wasAtBottom) {
-          term.scrollToBottom();
-        }
       } catch (e) {}
     }
   });
 }
 
-// Fit on resize - use 200ms delay to wait for CSS transitions (150ms) to complete
+// Fit on resize with debounce
 let resizeTimeout;
-window.addEventListener('resize', () => {
+window.addEventListener('resize', function() {
   clearTimeout(resizeTimeout);
-  resizeTimeout = setTimeout(fitAll, 200);
+  resizeTimeout = setTimeout(fitAll, 150);
 });
 
-// ResizeObserver for more reliable resize detection
-const resizeObserver = new ResizeObserver(() => {
+// ResizeObserver for container size changes
+const resizeObserver = new ResizeObserver(function() {
   clearTimeout(resizeTimeout);
-  resizeTimeout = setTimeout(fitAll, 200);
+  resizeTimeout = setTimeout(fitAll, 150);
 });
-document.querySelectorAll('.terminal-wrapper').forEach(el => {
-  resizeObserver.observe(el);
-});
+
+// Observe terminal wrappers
+function observeTerminalWrappers() {
+  document.querySelectorAll('.terminal-wrapper').forEach(function(el) {
+    resizeObserver.observe(el);
+  });
+}
+observeTerminalWrappers();
+
+// Viewport sync checker - detects when xterm viewport is out of sync and forces refit
+function checkViewportSync() {
+  var tab = getActiveTab();
+  if (!tab) return;
+
+  tab.terminals.forEach(function(term, i) {
+    if (!term || !tab.terminalInitialized[i]) return;
+
+    var container = document.getElementById('terminal-' + activeTabId + '-' + i);
+    if (!container) return;
+
+    var viewport = container.querySelector('.xterm-viewport');
+    var screen = container.querySelector('.xterm-screen');
+
+    if (viewport && screen) {
+      var viewportHeight = viewport.clientHeight;
+      var screenHeight = screen.offsetHeight;
+
+      // If viewport is significantly taller than screen content, refit
+      if (viewportHeight > screenHeight + 20) {
+        var addon = tab.fitAddons[i];
+        if (addon) {
+          addon.fit();
+        }
+      }
+    }
+  });
+}
+
+// Run viewport sync check periodically
+setInterval(checkViewportSync, 2000);
 
 // Store received config for later terminal initialization
 let receivedConfig = null;
+
+// Debounced fit for specific terminal after output
+var outputFitTimers = {};
+function fitTerminalAfterOutput(tabId, terminalId) {
+  var key = tabId + '-' + terminalId;
+  clearTimeout(outputFitTimers[key]);
+  outputFitTimers[key] = setTimeout(function() {
+    var tab = getTab(tabId);
+    if (tab && tab.fitAddons[terminalId] && tab.terminalInitialized[terminalId]) {
+      tab.fitAddons[terminalId].fit();
+    }
+  }, 500);
+}
 
 // Handle messages from extension
 window.addEventListener('message', function(event) {
@@ -962,14 +1051,26 @@ window.addEventListener('message', function(event) {
     case 'output':
       if (msgTab && msgTab.terminals[message.terminalId]) {
         var outTerm = msgTab.terminals[message.terminalId];
-        // Check if user is at bottom before writing
-        var isAtBottom = outTerm.buffer.active.viewportY >= outTerm.buffer.active.baseY;
-        outTerm.write(message.data, function() {
-          // Only auto-scroll if user was already at bottom, use callback to ensure write completes
-          if (isAtBottom) {
-            outTerm.scrollToBottom();
-          }
-        });
+        var termContainer = document.getElementById('terminal-' + msgTabId + '-' + message.terminalId);
+        var viewport = termContainer ? termContainer.querySelector('.xterm-viewport') : null;
+
+        // Check if user is at bottom before writing (check both xterm and DOM)
+        var xtermAtBottom = outTerm.buffer.active.viewportY >= outTerm.buffer.active.baseY;
+        var domAtBottom = viewport ? (viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 10) : true;
+        var isAtBottom = xtermAtBottom || domAtBottom;
+
+        outTerm.write(message.data);
+
+        // Auto-scroll if user was at bottom
+        if (isAtBottom && viewport) {
+          // Use requestAnimationFrame to ensure DOM is updated
+          requestAnimationFrame(function() {
+            viewport.scrollTop = viewport.scrollHeight;
+          });
+        }
+
+        // Refit terminal after output burst to ensure viewport stays in sync
+        fitTerminalAfterOutput(msgTabId, message.terminalId);
         // Restore saved title after restart
         if (msgTab.savedTitles && msgTab.savedTitles[message.terminalId]) {
           var titleEl = document.getElementById('terminal-title-' + msgTabId + '-' + message.terminalId);
@@ -1123,7 +1224,6 @@ window.addEventListener('message', function(event) {
       }
       // Reset global controls
       document.getElementById('global-project-select').value = '';
-      document.getElementById('global-resume').checked = false;
       updateGridLayout();
       break;
     case 'tabCreated':
@@ -1138,6 +1238,11 @@ window.addEventListener('message', function(event) {
       break;
     case 'tabSwitched':
       switchTabUI(message.tabId);
+      break;
+    case 'sessions':
+      if (message.projectPath === document.getElementById('global-project-select').value) {
+        renderSessions(message.sessions);
+      }
       break;
   }
 });
@@ -1248,6 +1353,75 @@ function updateProjectSelectors(projects) {
 
   // Update add button state based on selection
   updateAddButtonState();
+}
+
+// Session panel functions
+function openSessionPanel() {
+  const wrapper = document.getElementById('project-selector-wrapper');
+  if (wrapper) {
+    wrapper.classList.add('expanded');
+    sessionPanelOpen = true;
+  }
+}
+
+function closeSessionPanel() {
+  const wrapper = document.getElementById('project-selector-wrapper');
+  if (wrapper) {
+    wrapper.classList.remove('expanded');
+    sessionPanelOpen = false;
+  }
+}
+
+function selectSession(session) {
+  selectedSession = session;
+
+  // Update UI to show selection
+  document.querySelectorAll('.session-item').forEach(item => {
+    item.classList.remove('selected');
+  });
+
+  if (session.type === 'new') {
+    document.getElementById('new-session-item')?.classList.add('selected');
+  } else {
+    const item = document.querySelector('.session-item[data-session-id="' + session.sessionId + '"]');
+    if (item) item.classList.add('selected');
+  }
+
+  closeSessionPanel();
+  updateAddButtonState();
+}
+
+function renderSessions(sessions) {
+  const sessionList = document.getElementById('session-list');
+  if (!sessionList) return;
+
+  currentSessions = sessions;
+
+  if (sessions.length === 0) {
+    sessionList.innerHTML = '<div class="session-empty">No recent sessions</div>';
+    return;
+  }
+
+  sessionList.innerHTML = sessions.map(function(session) {
+    return '<div class="session-item" data-session-id="' + session.sessionId + '">' +
+      '<span class="session-message">' + escapeHtml(session.lastMessage) + '</span>' +
+      '<span class="session-time">' + escapeHtml(session.lastModified) + '</span>' +
+      '</div>';
+  }).join('');
+
+  // Add click handlers
+  sessionList.querySelectorAll('.session-item').forEach(function(item) {
+    item.addEventListener('click', function() {
+      var sessionId = this.dataset.sessionId;
+      selectSession({ type: 'resume', sessionId: sessionId });
+    });
+  });
+}
+
+function escapeHtml(text) {
+  var div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 // Add tab button event listener
