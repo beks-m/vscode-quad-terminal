@@ -6,6 +6,7 @@ import { TabManager } from './tab-manager';
 import { ConfigService } from './config-service';
 import { TerminalManager } from './terminal-manager';
 import { FileOperations } from './file-operations';
+import { SessionService } from './session-service';
 import { getWebviewHtml } from './webview-html';
 
 /**
@@ -18,6 +19,7 @@ export class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
   private configService: ConfigService;
   private terminalManager: TerminalManager;
   private fileOperations: FileOperations;
+  private sessionService: SessionService;
 
   constructor(private readonly _extensionUri: vscode.Uri) {
     // Initialize messenger with getter for view
@@ -34,6 +36,9 @@ export class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
 
     // Initialize file operations
     this.fileOperations = new FileOperations(this.tabManager, this.messenger);
+
+    // Initialize session service
+    this.sessionService = new SessionService();
   }
 
   public resolveWebviewView(
@@ -178,7 +183,16 @@ export class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
           this.terminalManager.cleanupAllTerminalsInTab(tabId);
         });
         break;
+
+      case 'getSessions':
+        this.handleGetSessions(message.projectPath);
+        break;
     }
+  }
+
+  private async handleGetSessions(projectPath: string): Promise<void> {
+    const sessions = await this.sessionService.getSessions(projectPath, 5);
+    this.messenger.sendSessions(projectPath, sessions);
   }
 
   private sendProjectsToWebview(): void {

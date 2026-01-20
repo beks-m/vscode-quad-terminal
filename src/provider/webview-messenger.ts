@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import {
   ExtensionToWebviewMessage,
   Project,
+  Session,
   TerminalConfig,
   TerminalStatus,
 } from '../types';
@@ -82,5 +83,10 @@ export class WebviewMessenger {
   /** Send restarting notification to webview (clears terminal but keeps slot) */
   sendRestarting(tabId: number, terminalId: number): void {
     this.send({ command: 'restarting', tabId, terminalId });
+  }
+
+  /** Send sessions for a project to webview */
+  sendSessions(projectPath: string, sessions: Session[]): void {
+    this.send({ command: 'sessions', projectPath, sessions });
   }
 }
