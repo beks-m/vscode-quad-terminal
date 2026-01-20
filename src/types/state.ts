@@ -78,3 +78,12 @@ export type TabId = number;
  * Terminal status for UI display
  */
 export type TerminalStatus = 'idle' | 'busy';
+
+/**
+ * Represents a Claude Code session for a project
+ */
+export interface Session {
+  sessionId: string;
+  lastMessage: string;
+  lastModified: string; // ISO timestamp
+}
