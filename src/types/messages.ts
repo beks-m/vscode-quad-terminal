@@ -15,6 +15,7 @@ export interface SelectProjectMessage {
   projectPath: string;
   resume: boolean;
   sessionId?: string; // Optional: specific session to resume
+  skipClaude?: boolean; // Optional: open empty terminal without starting Claude
 }
 
 export interface InputMessage {
@@ -98,6 +99,10 @@ export interface GetSessionsMessage {
   projectPath: string;
 }
 
+export interface ShowProjectPickerMessage {
+  command: 'showProjectPicker';
+}
+
 /** All messages that can be sent from webview to extension */
 export type WebviewToExtensionMessage =
   | ReadyMessage
@@ -113,7 +118,8 @@ export type WebviewToExtensionMessage =
   | CreateTabMessage
   | SwitchTabMessage
   | CloseTabMessage
-  | GetSessionsMessage;
+  | GetSessionsMessage
+  | ShowProjectPickerMessage;
 
 // ============================================
 // Extension -> Webview Messages
@@ -201,6 +207,13 @@ export interface SessionsMessage {
   sessions: Session[];
 }
 
+export interface TerminalStartedMessage {
+  command: 'terminalStarted';
+  tabId: number;
+  terminalId: number;
+  projectName: string;
+}
+
 /** All messages that can be sent from extension to webview */
 export type ExtensionToWebviewMessage =
   | ProjectsMessage
@@ -216,4 +229,5 @@ export type ExtensionToWebviewMessage =
   | TabClosedMessage
   | TabSwitchedMessage
   | RestartingMessage
-  | SessionsMessage;
+  | SessionsMessage
+  | TerminalStartedMessage;

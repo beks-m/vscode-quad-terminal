@@ -102,7 +102,8 @@ export class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
             tabId,
             message.terminalId,
             message.projectPath,
-            message.sessionId
+            message.sessionId,
+            message.skipClaude
           );
         }
         break;
@@ -187,7 +188,110 @@ export class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
       case 'getSessions':
         this.handleGetSessions(message.projectPath);
         break;
+
+      case 'showProjectPicker':
+        this.showProjectPicker();
+        break;
     }
+  }
+
+  private async showProjectPicker(): Promise<void> {
+    const projects = this.configService.getWorkspaceProjects();
+
+    if (projects.length === 0) {
+      vscode.window.showInformationMessage('No workspace folders open');
+      return;
+    }
+
+    // Show project picker
+    const projectItems = projects.map((p) => ({
+      label: p.name,
+      description: p.path,
+      project: p,
+    }));
+
+    const selectedProject = await vscode.window.showQuickPick(projectItems, {
+      placeHolder: 'Select a project',
+    });
+
+    if (!selectedProject) return;
+
+    // Get sessions for the selected project
+    const sessions = await this.sessionService.getSessions(
+      selectedProject.project.path,
+      5
+    );
+
+    // Build session picker items
+    const sessionItems: Array<{
+      label: string;
+      description?: string;
+      kind?: vscode.QuickPickItemKind;
+      sessionId?: string;
+      action?: 'new' | 'empty';
+    }> = [
+      { label: 'New Session', action: 'new' },
+      { label: 'Empty Terminal', description: 'Shell only, no Claude', action: 'empty' },
+    ];
+
+    if (sessions.length > 0) {
+      sessionItems.push({
+        label: 'Recent Sessions',
+        kind: vscode.QuickPickItemKind.Separator,
+      });
+      sessions.forEach((s) => {
+        sessionItems.push({
+          label: s.lastMessage,
+          description: s.lastModified,
+          sessionId: s.sessionId,
+        });
+      });
+    }
+
+    const selectedSession = await vscode.window.showQuickPick(sessionItems, {
+      placeHolder: `Select session for ${selectedProject.label}`,
+    });
+
+    if (!selectedSession || selectedSession.kind === vscode.QuickPickItemKind.Separator) return;
+
+    // Find available terminal slot and start terminal
+    const activeTabId = this.tabManager.activeTabId;
+    const tabState = this.tabManager.getTabState(activeTabId);
+    if (!tabState) return;
+
+    // Find an available slot
+    let targetTerminalId = -1;
+    for (let i = 0; i < 4; i++) {
+      if (!tabState.terminalProjects.has(i)) {
+        targetTerminalId = i;
+        break;
+      }
+    }
+
+    if (targetTerminalId === -1) {
+      // Create new tab
+      this.tabManager.createTab();
+      return;
+    }
+
+    // Start terminal
+    const sessionId = selectedSession.sessionId;
+    const skipClaude = selectedSession.action === 'empty';
+
+    this.terminalManager.startTerminal(
+      activeTabId,
+      targetTerminalId,
+      selectedProject.project.path,
+      sessionId,
+      skipClaude
+    );
+
+    // Send message to webview to show the terminal
+    this.messenger.sendTerminalStarted(
+      activeTabId,
+      targetTerminalId,
+      selectedProject.label
+    );
   }
 
   private async handleGetSessions(projectPath: string): Promise<void> {
@@ -214,6 +318,14 @@ export class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
     this.disposeAllResources();
     this.messenger.sendRefresh();
     this.sendProjectsToWebview();
+  }
+
+  public newTerminal(): void {
+    this.showProjectPicker();
+  }
+
+  public newTab(): void {
+    this.tabManager.createTab();
   }
 
   public dispose(): void {

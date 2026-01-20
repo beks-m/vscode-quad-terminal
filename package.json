@@ -43,6 +43,28 @@
         "command": "quadTerminal.refresh",
         "title": "Refresh Terminals",
         "category": "Quad Terminal"
+      },
+      {
+        "command": "quadTerminal.newTerminal",
+        "title": "New Terminal",
+        "category": "Quad Terminal"
+      },
+      {
+        "command": "quadTerminal.newTab",
+        "title": "New Tab",
+        "category": "Quad Terminal"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "quadTerminal.newTerminal",
+        "key": "ctrl+alt+n",
+        "mac": "cmd+alt+n"
+      },
+      {
+        "command": "quadTerminal.newTab",
+        "key": "ctrl+alt+t",
+        "mac": "cmd+alt+t"
       }
     ]
   },
@@ -51,7 +73,7 @@
     "compile": "tsc -p ./ && npm run copy-webview",
     "copy-webview": "mkdir -p out/webview/styles out/webview/scripts && cp src/webview/index.html out/webview/ && cp src/webview/styles/*.css out/webview/styles/ && cp src/webview/scripts/*.js out/webview/scripts/",
     "watch": "tsc -watch -p ./",
-    "package": "vsce package"
+    "package": "npm version patch --no-git-tag-version && vsce package"
   },
   "devDependencies": {
     "@electron/rebuild": "^4.0.2",

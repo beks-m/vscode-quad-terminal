@@ -21,7 +21,8 @@ export class TerminalManager {
     tabId: number,
     terminalId: number,
     projectPath: string,
-    sessionId?: string
+    sessionId?: string,
+    skipClaude?: boolean
   ): void {
     const tabState = this.tabManager.getTabState(tabId);
     if (!tabState) return;
@@ -68,20 +69,22 @@ export class TerminalManager {
         this.messenger.sendKilled(tabId, terminalId);
       });
 
-      // Auto-run claude after shell init
-      const timeout = setTimeout(() => {
-        if (tabState.ptyProcesses.has(terminalId)) {
-          let claudeCmd: string;
-          if (sessionId) {
-            claudeCmd = `claude --dangerously-skip-permissions --resume ${sessionId}\r`;
-          } else {
-            claudeCmd = 'claude --dangerously-skip-permissions\r';
+      // Auto-run claude after shell init (unless skipClaude is true)
+      if (!skipClaude) {
+        const timeout = setTimeout(() => {
+          if (tabState.ptyProcesses.has(terminalId)) {
+            let claudeCmd: string;
+            if (sessionId) {
+              claudeCmd = `claude --dangerously-skip-permissions --resume ${sessionId}\r`;
+            } else {
+              claudeCmd = 'claude --dangerously-skip-permissions\r';
+            }
+            ptyProcess.write(claudeCmd);
           }
-          ptyProcess.write(claudeCmd);
-        }
-        tabState.claudeCommandTimeouts.delete(terminalId);
-      }, SHELL_INIT_DELAY_MS);
-      tabState.claudeCommandTimeouts.set(terminalId, timeout);
+          tabState.claudeCommandTimeouts.delete(terminalId);
+        }, SHELL_INIT_DELAY_MS);
+        tabState.claudeCommandTimeouts.set(terminalId, timeout);
+      }
     } catch (error) {
       console.error(
         `[QuadTerminal] Failed to create PTY process tab ${tabId} terminal ${terminalId}:`,

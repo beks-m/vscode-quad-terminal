@@ -27,6 +27,18 @@ export function activate(context: vscode.ExtensionContext) {
       provider.refresh();
     })
   );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('quadTerminal.newTerminal', () => {
+      provider.newTerminal();
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('quadTerminal.newTab', () => {
+      provider.newTab();
+    })
+  );
 }
 
 export function deactivate() {

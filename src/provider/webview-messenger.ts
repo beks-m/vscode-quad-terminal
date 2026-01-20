@@ -89,4 +89,9 @@ export class WebviewMessenger {
   sendSessions(projectPath: string, sessions: Session[]): void {
     this.send({ command: 'sessions', projectPath, sessions });
   }
+
+  /** Send terminal started notification to webview */
+  sendTerminalStarted(tabId: number, terminalId: number, projectName: string): void {
+    this.send({ command: 'terminalStarted', tabId, terminalId, projectName });
+  }
 }

@@ -13,10 +13,6 @@ const tabState = {
 let activeTabId = 1;
 let nextTabId = 2;
 
-// Session selection state
-let selectedSession = { type: 'new' }; // { type: 'new' } or { type: 'resume', sessionId: string }
-let currentSessions = [];
-let sessionPanelOpen = false;
 
 // Helper to get current tab state
 function getActiveTab() {
@@ -430,160 +426,10 @@ function removeTerminalSlot(terminalId) {
   updateGridLayout();
 }
 
-function hasAvailableSlot() {
-  var tab = getActiveTab();
-  if (!tab) return false;
-  // Check for visible empty slot (no active project)
-  for (var i = 0; i < 4; i++) {
-    var container = document.getElementById('term-container-' + activeTabId + '-' + i);
-    if (container && !container.classList.contains('hidden-slot') && !tab.terminalProjects[i]) {
-      return true;
-    }
-  }
-  // Check for hidden slot
-  for (var i = 0; i < 4; i++) {
-    var container = document.getElementById('term-container-' + activeTabId + '-' + i);
-    if (container && container.classList.contains('hidden-slot')) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function startTerminalWithProject(terminalId, projectPath, projectName, sessionId) {
-  var tab = getActiveTab();
-  if (!tab) return;
-
-  // Initialize the terminal UI
-  initializeTerminal(terminalId);
-
-  // Update terminal title
-  var titleEl = document.getElementById('terminal-title-' + activeTabId + '-' + terminalId);
-  if (titleEl) {
-    titleEl.textContent = projectName;
-    titleEl.classList.remove('empty');
-  }
-
-  // Store project info
-  tab.terminalProjects[terminalId] = projectPath;
-
-  // Update status indicator
-  var statusEl = document.getElementById('status-' + activeTabId + '-' + terminalId);
-  if (statusEl) statusEl.classList.add('active');
-
-  // Send message to extension to start the terminal
-  var message = {
-    command: 'selectProject',
-    tabId: activeTabId,
-    terminalId: terminalId,
-    projectPath: projectPath
-  };
-  if (sessionId) {
-    message.sessionId = sessionId;
-  }
-  vscode.postMessage(message);
-}
-
-// Update and fetch sessions when project selection changes
-document.getElementById('global-project-select').addEventListener('change', function() {
-  var projectPath = this.value;
-
-  // Reset session selection
-  selectedSession = { type: 'new' };
-  document.querySelectorAll('.session-item').forEach(function(item) {
-    item.classList.remove('selected');
-  });
-  var newSessionItem = document.getElementById('new-session-item');
-  if (newSessionItem) newSessionItem.classList.add('selected');
-
-  if (projectPath) {
-    // Show loading state
-    var sessionList = document.getElementById('session-list');
-    if (sessionList) {
-      sessionList.innerHTML = '<div class="session-loading">Loading sessions...</div>';
-    }
-
-    // Request sessions from extension
-    vscode.postMessage({
-      command: 'getSessions',
-      projectPath: projectPath
-    });
-
-    // Open the session panel
-    openSessionPanel();
-  } else {
-    closeSessionPanel();
-  }
+// New terminal button click - show native VS Code QuickPick
+document.getElementById('add-terminal-btn').addEventListener('click', function() {
+  vscode.postMessage({ command: 'showProjectPicker' });
 });
-
-// New session item click handler
-var newSessionEl = document.getElementById('new-session-item');
-if (newSessionEl) {
-  newSessionEl.addEventListener('click', function() {
-    selectSession({ type: 'new' });
-  });
-}
-
-// Close session panel when clicking outside
-document.addEventListener('click', function(e) {
-  var wrapper = document.getElementById('project-selector-wrapper');
-  if (wrapper && sessionPanelOpen && !wrapper.contains(e.target)) {
-    closeSessionPanel();
-  }
-});
-
-function addTerminal() {
-  var tab = getActiveTab();
-  if (!tab) return;
-
-  var globalSelect = document.getElementById('global-project-select');
-  var projectPath = globalSelect.value;
-  var projectName = globalSelect.options[globalSelect.selectedIndex] ? globalSelect.options[globalSelect.selectedIndex].text : '';
-  var sessionId = selectedSession.type === 'resume' ? selectedSession.sessionId : null;
-
-  // Require a project to be selected
-  if (!projectPath) {
-    return;
-  }
-
-  // Find an available slot
-  var targetTerminalId = -1;
-
-  // First, check for a visible empty slot (no active project)
-  for (var i = 0; i < 4; i++) {
-    var container = document.getElementById('term-container-' + activeTabId + '-' + i);
-    if (container && !container.classList.contains('hidden-slot') && !tab.terminalProjects[i]) {
-      targetTerminalId = i;
-      break;
-    }
-  }
-
-  // If no visible empty slot, find a hidden slot and show it
-  if (targetTerminalId === -1) {
-    for (var i = 0; i < 4; i++) {
-      var container = document.getElementById('term-container-' + activeTabId + '-' + i);
-      if (container && container.classList.contains('hidden-slot')) {
-        targetTerminalId = i;
-        container.classList.remove('hidden-slot');
-        tab.visibleTerminalCount++;
-        updateGridLayout();
-        break;
-      }
-    }
-  }
-
-  // No available slot - create new tab
-  if (targetTerminalId === -1) {
-    vscode.postMessage({ command: 'createTab' });
-    return;
-  }
-
-  // Delay terminal start to allow layout to settle
-  var tid = targetTerminalId;
-  setTimeout(function() {
-    startTerminalWithProject(tid, projectPath, projectName, sessionId);
-  }, 100);
-}
 
 function toggleFullscreen(terminalId) {
   var grid = document.querySelector('.grid[data-tab-id="' + activeTabId + '"]');
@@ -1223,13 +1069,44 @@ window.addEventListener('message', function(event) {
     case 'tabSwitched':
       switchTabUI(message.tabId);
       break;
-    case 'sessions':
-      if (message.projectPath === document.getElementById('global-project-select').value) {
-        renderSessions(message.sessions);
-      }
+    case 'terminalStarted':
+      // Extension started a terminal via QuickPick - initialize the UI
+      handleTerminalStarted(message.tabId, message.terminalId, message.projectName);
       break;
   }
 });
+
+function handleTerminalStarted(tabId, terminalId, projectName) {
+  var tab = getTab(tabId);
+  if (!tab) return;
+
+  // Show the terminal slot if hidden
+  var container = document.getElementById('term-container-' + tabId + '-' + terminalId);
+  if (container && container.classList.contains('hidden-slot')) {
+    container.classList.remove('hidden-slot');
+    tab.visibleTerminalCount++;
+    if (tabId === activeTabId) {
+      updateGridLayout();
+    }
+  }
+
+  // Initialize terminal UI
+  initializeTerminal(terminalId);
+
+  // Update terminal title
+  var titleEl = document.getElementById('terminal-title-' + tabId + '-' + terminalId);
+  if (titleEl) {
+    titleEl.textContent = projectName;
+    titleEl.classList.remove('empty');
+  }
+
+  // Store project info
+  tab.terminalProjects[terminalId] = projectName;
+
+  // Update status indicator
+  var statusEl = document.getElementById('status-' + tabId + '-' + terminalId);
+  if (statusEl) statusEl.classList.add('active');
+}
 
 function applyTerminalConfig(config) {
   // Apply theme class to body for CSS styling
@@ -1314,98 +1191,10 @@ function applyTerminalConfig(config) {
 }
 
 function updateProjectSelectors(projects) {
-  const select = document.getElementById('global-project-select');
-  const currentValue = select.value;
-
-  // Clear existing options except the first one
-  while (select.options.length > 1) {
-    select.remove(1);
-  }
-
-  // Add project options
-  projects.forEach(project => {
-    const option = document.createElement('option');
-    option.value = project.path;
-    option.textContent = project.name;
-    select.appendChild(option);
-  });
-
-  // Restore previous selection if still valid
-  if (currentValue) {
-    select.value = currentValue;
-  }
+  // Projects are now handled by the extension via QuickPick
+  // This function is kept for compatibility but does nothing
 }
 
-// Session panel functions
-function openSessionPanel() {
-  const wrapper = document.getElementById('project-selector-wrapper');
-  if (wrapper) {
-    wrapper.classList.add('expanded');
-    sessionPanelOpen = true;
-  }
-}
-
-function closeSessionPanel() {
-  const wrapper = document.getElementById('project-selector-wrapper');
-  if (wrapper) {
-    wrapper.classList.remove('expanded');
-    sessionPanelOpen = false;
-  }
-}
-
-function selectSession(session) {
-  selectedSession = session;
-
-  // Update UI to show selection
-  document.querySelectorAll('.session-item').forEach(item => {
-    item.classList.remove('selected');
-  });
-
-  if (session.type === 'new') {
-    document.getElementById('new-session-item')?.classList.add('selected');
-  } else {
-    const item = document.querySelector('.session-item[data-session-id="' + session.sessionId + '"]');
-    if (item) item.classList.add('selected');
-  }
-
-  closeSessionPanel();
-
-  // Automatically start terminal with selected session
-  addTerminal();
-}
-
-function renderSessions(sessions) {
-  const sessionList = document.getElementById('session-list');
-  if (!sessionList) return;
-
-  currentSessions = sessions;
-
-  if (sessions.length === 0) {
-    sessionList.innerHTML = '<div class="session-empty">No recent sessions</div>';
-    return;
-  }
-
-  sessionList.innerHTML = sessions.map(function(session) {
-    return '<div class="session-item" data-session-id="' + session.sessionId + '">' +
-      '<span class="session-message">' + escapeHtml(session.lastMessage) + '</span>' +
-      '<span class="session-time">' + escapeHtml(session.lastModified) + '</span>' +
-      '</div>';
-  }).join('');
-
-  // Add click handlers
-  sessionList.querySelectorAll('.session-item').forEach(function(item) {
-    item.addEventListener('click', function() {
-      var sessionId = this.dataset.sessionId;
-      selectSession({ type: 'resume', sessionId: sessionId });
-    });
-  });
-}
-
-function escapeHtml(text) {
-  var div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
 
 // Add tab button event listener
 document.getElementById('add-tab-btn').addEventListener('click', function() {
@@ -1420,8 +1209,13 @@ if (initialTabBtn) {
 
 // Keyboard shortcuts for tab management
 document.addEventListener('keydown', function(e) {
-  // Ctrl/Cmd+T: New tab
-  if ((e.ctrlKey || e.metaKey) && e.key === 't') {
+  // Ctrl/Cmd+Alt+N: New terminal
+  if ((e.ctrlKey || e.metaKey) && e.altKey && (e.key === 'n' || e.key === 'N')) {
+    e.preventDefault();
+    vscode.postMessage({ command: 'showProjectPicker' });
+  }
+  // Ctrl/Cmd+Alt+T: New tab
+  if ((e.ctrlKey || e.metaKey) && e.altKey && (e.key === 't' || e.key === 'T')) {
     e.preventDefault();
     vscode.postMessage({ command: 'createTab' });
   }
