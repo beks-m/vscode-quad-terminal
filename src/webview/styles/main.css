@@ -183,19 +183,21 @@ html, body {
   flex: 1;
   min-width: 0;
 }
-.project-selector-wrapper.expanded .project-select {
-  border-radius: 4px 0 0 4px;
-  border-right: none;
-}
 .session-panel {
   display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
   background: var(--vscode-dropdown-background, #3c3c3c);
   border: 1px solid var(--vscode-focusBorder, #007acc);
-  border-left: none;
-  border-radius: 0 4px 4px 0;
-  max-width: 280px;
-  min-width: 200px;
+  border-radius: 4px;
+  min-width: 280px;
+  max-width: 400px;
   overflow: hidden;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 .project-selector-wrapper.expanded .session-panel {
   display: block;
