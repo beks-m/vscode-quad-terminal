@@ -26,14 +26,22 @@
       </div>
       <div class="control-panel-section">
         <span class="control-label">Project</span>
-        <select class="project-select" id="global-project-select">
-          <option value="">Select project...</option>
-        </select>
+        <div class="project-selector-wrapper" id="project-selector-wrapper">
+          <select class="project-select" id="global-project-select">
+            <option value="">Select project...</option>
+          </select>
+          <div class="session-panel" id="session-panel">
+            <div class="session-item new-session" id="new-session-item">
+              <svg class="session-icon" viewBox="0 0 16 16"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg>
+              <span class="session-label">New Session</span>
+            </div>
+            <div class="session-divider"></div>
+            <div class="session-list" id="session-list">
+              <div class="session-loading">Loading sessions...</div>
+            </div>
+          </div>
+        </div>
       </div>
-      <label class="resume-label" id="global-resume-label" title="Resume previous Claude session">
-        <input type="checkbox" class="resume-checkbox" id="global-resume">
-        <svg class="resume-icon" viewBox="0 0 16 16"><path d="M3 3l5 5-5 5V3z"/><path d="M9 3l5 5-5 5V3z"/></svg>
-      </label>
       <div class="control-panel-divider"></div>
       <button class="add-terminal-btn" id="add-terminal-btn" title="Add terminal with selected project" disabled>
         <svg viewBox="0 0 16 16"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg>
