@@ -2,7 +2,7 @@
   "name": "quad-terminal",
   "displayName": "Quad Terminal",
   "description": "4 terminals in a 2x2 grid layout for the secondary sidebar",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "engines": {
     "vscode": "^1.85.0"
   },

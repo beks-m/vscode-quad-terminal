@@ -14,6 +14,10 @@ export class TerminalManager {
     private messenger: WebviewMessenger
   ) {}
 
+  private timestamp(): string {
+    return new Date().toISOString();
+  }
+
   /**
    * Start a terminal with a project
    */
@@ -24,6 +28,15 @@ export class TerminalManager {
     sessionId?: string,
     skipClaude?: boolean
   ): void {
+    console.log(`[${this.timestamp()}] [QuadTerminal] startTerminal called: tab=${tabId}, terminal=${terminalId}, path=${projectPath}`);
+
+    // Log all existing PTY processes across all tabs
+    for (const [tid, ts] of this.tabManager.getAllTabs()) {
+      for (const [termId, pty] of ts.ptyProcesses) {
+        console.log(`[${this.timestamp()}] [QuadTerminal] Existing PTY: tab=${tid}, terminal=${termId}, pid=${pty.pid}`);
+      }
+    }
+
     const tabState = this.tabManager.getTabState(tabId);
     if (!tabState) return;
 
@@ -39,18 +52,27 @@ export class TerminalManager {
         : process.env.SHELL || '/bin/zsh';
 
     try {
+      // Create clean environment without Claude Code specific variables
+      // that might cause conflicts when running multiple Claude instances
+      const cleanEnv = { ...process.env };
+      delete cleanEnv.CLAUDECODE;
+      delete cleanEnv.CLAUDE_CODE_ENTRYPOINT;
+      delete cleanEnv.CLAUDE_CODE_SESSION;
+      delete cleanEnv.VSCODE_GIT_IPC_HANDLE;
+
       const ptyProcess = pty.spawn(shell, [], {
         name: 'xterm-256color',
         cols: 80,
         rows: 24,
         cwd: projectPath,
         env: {
-          ...process.env,
+          ...cleanEnv,
           TERM: 'xterm-256color',
           COLORTERM: 'truecolor',
         } as { [key: string]: string },
       });
 
+      console.log(`[${this.timestamp()}] [QuadTerminal] Created new PTY: tab=${tabId}, terminal=${terminalId}, pid=${ptyProcess.pid}`);
       tabState.ptyProcesses.set(terminalId, ptyProcess);
       tabState.terminalProjects.set(terminalId, projectPath);
 
@@ -61,9 +83,9 @@ export class TerminalManager {
       });
 
       // Handle PTY exit
-      ptyProcess.onExit(({ exitCode }) => {
+      ptyProcess.onExit(({ exitCode, signal }) => {
         console.log(
-          `[QuadTerminal] Tab ${tabId} Terminal ${terminalId} exited with code ${exitCode}`
+          `[${this.timestamp()}] [QuadTerminal] PTY EXIT: tab=${tabId}, terminal=${terminalId}, pid=${ptyProcess.pid}, exitCode=${exitCode}, signal=${signal}`
         );
         this.cleanupTerminal(tabId, terminalId);
         this.messenger.sendKilled(tabId, terminalId);
@@ -102,13 +124,21 @@ export class TerminalManager {
    * Clean up terminal resources
    */
   cleanupTerminal(tabId: number, terminalId: number): void {
+    console.log(`[${this.timestamp()}] [QuadTerminal] cleanupTerminal called: tab=${tabId}, terminal=${terminalId}`);
+
     const tabState = this.tabManager.getTabState(tabId);
-    if (!tabState) return;
+    if (!tabState) {
+      console.log(`[${this.timestamp()}] [QuadTerminal] cleanupTerminal: no tabState for tab=${tabId}`);
+      return;
+    }
 
     const existingPty = tabState.ptyProcesses.get(terminalId);
     if (existingPty) {
+      console.log(`[${this.timestamp()}] [QuadTerminal] cleanupTerminal: KILLING PTY pid=${existingPty.pid} in tab=${tabId}, terminal=${terminalId}`);
       existingPty.kill();
       tabState.ptyProcesses.delete(terminalId);
+    } else {
+      console.log(`[${this.timestamp()}] [QuadTerminal] cleanupTerminal: no existing PTY for tab=${tabId}, terminal=${terminalId}`);
     }
 
     this.clearIdleTimer(tabId, terminalId);

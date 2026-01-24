@@ -173,6 +173,8 @@ export class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
 
       case 'createTab':
         this.tabManager.createTab();
+        // Automatically show project picker for new tab
+        this.showProjectPicker();
         break;
 
       case 'switchTab':
@@ -326,6 +328,8 @@ export class QuadTerminalViewProvider implements vscode.WebviewViewProvider {
 
   public newTab(): void {
     this.tabManager.createTab();
+    // Automatically show project picker for new tab
+    this.showProjectPicker();
   }
 
   public dispose(): void {
